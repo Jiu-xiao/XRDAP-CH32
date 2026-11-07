@@ -29,6 +29,7 @@
 #include "boot_guard.hpp"
 #include "ch32_gpio.hpp"
 #include "ch32_timebase.hpp"
+#include "chip_uid.hpp"
 #include "chip_usb.hpp"
 #include "daplink_v2_profile_swd.hpp"
 #include "debug/swd_general_gpio.hpp"
@@ -38,6 +39,7 @@
 #include "sampler_tick.hpp"
 #include "xrdap/activity/dap_activity.hpp"
 #include "xrdap/control/usb_control.hpp"
+#include "xrdap/probe/probe_identity.hpp"
 #include "xrdap/session/executor.hpp"
 #include "xrdap/vendor/dap_vendor.hpp"
 #include "xrdap/vendor/reset_counting_usb.hpp"
@@ -126,6 +128,9 @@ class Probe
   SamplerTick tick_;
   Control::UsbControl<Dap> usb_control_;
   ProbeUsb<kDapPacketSize> usb_;
+  // 由芯片 UID 得出的序列号，DAP_Info 报告它 / The serial made from the chip UID,
+  // reported by DAP_Info.
+  char serial_[SerialBufferSize(kChipUidSize)] = {};
   Part* const* parts_ = nullptr;
   size_t part_count_ = 0;
 };

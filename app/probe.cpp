@@ -21,8 +21,6 @@ constexpr LibXR::Debug::SwdGpioTiming kSwdTiming{
 // work.
 constexpr uint32_t kStepWaitMs = 10;
 
-char serial[SerialBufferSize(kChipUidSize)];
-
 constexpr auto kStrings = LibXR::USB::DescriptorStrings::MakeLanguagePack(
     LibXR::USB::DescriptorStrings::Language::EN_US, kVendorName, kUsbProductName,
     kSerialPrefix);
@@ -59,8 +57,8 @@ Probe::Probe()
       usb_(Family::kUsbVid, Family::kUsbPid, kUsbBcd, {&kStrings}, {{&dap_, &dfu_}},
            {ChipUid(), kChipUidSize})
 {
-  FormatSerial(ChipUid(), kChipUidSize, serial);
-  SetProbeInfo(dap_, {kProductName, Board::kName, serial, kFirmwareVersion});
+  FormatSerial(ChipUid(), kChipUidSize, serial_);
+  SetProbeInfo(dap_, {kProductName, Board::kName, serial_, kFirmwareVersion});
   // USB 总线复位让连在 USB 上的连接作废。 / A USB bus reset lapses a connection on USB.
   vendor_.SetUsbResetSource(&dfu_.BusResets());
   exec_.SetControl(&Probe::HandleControl, this);
