@@ -29,6 +29,7 @@
 #include XRDAP_BOARD_HEADER
 #include "boot_slots.hpp"
 #include "ch32_flash.hpp"
+#include "ch32_gpio.hpp"
 #include "ch32_timebase.hpp"
 #include "chip_uid.hpp"
 #include "chip_usb.hpp"
@@ -292,22 +293,12 @@ bool ConsumeBootRequest()
   return requested;
 }
 
-void ConfigurePin(const XrDap::BoardPin& pin, GPIOMode_TypeDef mode)
-{
-  RCC_APB2PeriphClockCmd(XrDap::PortClock(pin.port), ENABLE);
-  GPIO_InitTypeDef init = {};
-  init.GPIO_Pin = pin.Mask();
-  init.GPIO_Speed = GPIO_Speed_10MHz;
-  init.GPIO_Mode = mode;
-  GPIO_Init(pin.Port(), &init);
-}
-
 bool BootKeyHeld()
 {
-  ConfigurePin(Board::kBootKey, GPIO_Mode_IPU);
+  LibXR::CH32GPIO key(Board::kBootKey.Port(), Board::kBootKey.Mask(),
+                      LibXR::GPIO::Direction::INPUT, LibXR::GPIO::Pull::UP);
   LibXR::Timebase::DelayMicroseconds(100);  // let the pull-up settle
-  return GPIO_ReadInputDataBit(Board::kBootKey.Port(), Board::kBootKey.Mask()) ==
-         Bit_RESET;
+  return !key.Read();
 }
 
 // The CH32 startup code puts `j handle_reset` at the image base and the vector table
@@ -377,8 +368,8 @@ void BlinkLed([[maybe_unused]] uint32_t now_ms)
   if constexpr (Board::kLed.has_value())
   {
     const bool on = ((now_ms / kLedPeriodMs) & 1U) != 0U;
-    GPIO_WriteBit(Board::kLed->pin.Port(), Board::kLed->pin.Mask(),
-                  on == Board::kLed->active_high ? Bit_SET : Bit_RESET);
+    static LibXR::CH32GPIO led(Board::kLed->pin.Port(), Board::kLed->pin.Mask());
+    led.Write(on == Board::kLed->active_high);
   }
 }
 }  // namespace
@@ -407,11 +398,6 @@ extern "C" void bootloader_main()
   if (!requested && !BootKeyHeld() && AppVectorsPlausible() && dfu.HasValidImage())
   {
     JumpToApp();
-  }
-
-  if constexpr (Board::kLed.has_value())
-  {
-    ConfigurePin(Board::kLed->pin, GPIO_Mode_Out_PP);
   }
 
   static constexpr auto kStrings = LibXR::USB::DescriptorStrings::MakeLanguagePack(
