@@ -9,12 +9,16 @@ namespace XrDap
 namespace
 {
 
+static_assert(Board::kLed.has_value(), "StatusLed drives the board's LED (Board::kLed)");
+
 uint32_t NowMs() { return static_cast<uint32_t>(LibXR::Timebase::GetMilliseconds()); }
 
 }  // namespace
 
 StatusLed::StatusLed(const Probe& probe)
-    : probe_(probe), led_(Board::kLed.Port(), Board::kLed.Mask()), rule_(NowMs())
+    : probe_(probe),
+      led_(Board::kLed->pin.Port(), Board::kLed->pin.Mask()),
+      rule_(NowMs())
 {
   Write(false);
 }
@@ -30,6 +34,6 @@ bool StatusLed::Poll()
   return false;
 }
 
-void StatusLed::Write(bool lit) { led_.Write(lit == Board::kLedActiveHigh); }
+void StatusLed::Write(bool lit) { led_.Write(lit == Board::kLed->active_high); }
 
 }  // namespace XrDap

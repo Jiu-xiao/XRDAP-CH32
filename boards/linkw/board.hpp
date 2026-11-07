@@ -39,8 +39,7 @@ inline constexpr uint16_t kUsbBcd = 0x0700;
 inline constexpr BoardPin kBootKey{kPortA, 4};
 
 /// 蓝灯 D2（LED_CON），低电平点亮 / Blue LED D2 (LED_CON), lit when low.
-inline constexpr BoardPin kLed{kPortC, 9};
-inline constexpr bool kLedActiveHigh = false;
+inline constexpr std::optional<BoardLed> kLed = BoardLed{{kPortC, 9}, false};
 
 /// 绿灯 D3（LED_Mode），低电平点亮：会话走无线时亮，配对时闪 / Green LED D3 (LED_Mode),
 /// lit when low: on while a session runs over the radio, blinking while pairing.

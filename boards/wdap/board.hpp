@@ -37,6 +37,8 @@ inline constexpr BoardPin kStatusLights{kPortB, 15};
 /// driver as well.
 inline constexpr BoardPin kStatusLightSck{kPortB, 13};
 inline constexpr BoardPin kStatusLightMiso{kPortB, 14};
+/// 没有单色指示灯，bootloader 不闪灯 / No single LED; the bootloader does not blink.
+inline constexpr std::optional<BoardLed> kLed = std::nullopt;
 
 /// P2-3 TCK_O：SWD 时为 SWCLK / P2-3 TCK_O, SWCLK in SWD mode.
 inline constexpr BoardPin kSwclk{kPortB, 3};

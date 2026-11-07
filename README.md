@@ -259,7 +259,7 @@ CH32V208 的 Flash 共 480 KB，开头的零等待区按用户选择字是 128�
 
 一块板的文件都在 `boards/<名字>/`：`board.cmake`、`board.hpp`、`board.cpp`，以及只有这块板用的部件（`wdap` 的 SX1281 适配和 WS2812 状态灯，`linkw` 的射频驱动）。一个芯片系列的文件都在 `chips/<系列>/`：WCH 的 SDK（`Core`、`Peripheral`）、启动文件、`xrdap_chip.h`（PLL、LSI 和节拍定时器）、`chip_usb.hpp` 和写编译参数的 `chip.cmake`；链接脚本 `chips/Link.ld` 两个系列共用。`app/` 是各板共用的应用部分，`common/` 是应用和引导共用的定义，`cmake/xrdap.cmake` 是两个工程共用的编译设置、默认值、Flash 布局和版本号。
 
-`board.cmake` 写芯片系列（`XRDAP_CHIP_FAMILY`，默认 `ch32v30x`）、晶振频率、bootloader 键（`XRDAP_BOOT_KEY_PORT`、`XRDAP_BOOT_KEY_PIN`，stage1 也读它）、应用主频（`XRDAP_APP_SYSCLK_HZ`，preset 可以改它）、引导里的指示灯（`XRDAP_HAS_LED`）、部件的源文件（`XRDAP_BOARD_SOURCES`）、芯片与默认（CH32V307）不同时的 Flash 布局和引导参数（应用窗口、引导槽地址、首个槽、引导的堆和产品串、启动信箱魔数，例子见 `boards/v305/board.cmake`）以及芯片内存和各缓冲区大小（`XRDAP_RAM_SIZE`、`XRDAP_C_HEAP_SIZE` 等，默认值和含义见 `cmake/xrdap.cmake`）。`board.hpp` 写 bootloader 键、指示灯、状态灯、射频、目标引脚、SWD 时序和占用引脚前的初始化（`Board::Init()`）。`board.cpp` 构造公共的探针部分（`app/probe.hpp`）和这块板另有的部件（无线、状态灯等，`app/part.hpp`），再运行主循环。增加一种板子需要新建这个目录，并在 `CMakePresets.json` 里加一个 preset。
+`board.cmake` 写芯片系列（`XRDAP_CHIP_FAMILY`，默认 `ch32v30x`）、晶振频率、bootloader 键（`XRDAP_BOOT_KEY_PORT`、`XRDAP_BOOT_KEY_PIN`，stage1 也读它）、应用主频（`XRDAP_APP_SYSCLK_HZ`，preset 可以改它）、部件的源文件（`XRDAP_BOARD_SOURCES`）、芯片与默认（CH32V307）不同时的 Flash 布局和引导参数（应用窗口、引导槽地址、首个槽、引导的堆和产品串、启动信箱魔数，例子见 `boards/v305/board.cmake`）以及芯片内存和各缓冲区大小（`XRDAP_RAM_SIZE`、`XRDAP_C_HEAP_SIZE` 等，默认值和含义见 `cmake/xrdap.cmake`）。`board.hpp` 写 bootloader 键、指示灯（`kLed`，没有时写 `std::nullopt`，bootloader 只在有灯时闪烁）、状态灯、射频、目标引脚、SWD 时序和占用引脚前的初始化（`Board::Init()`）。`board.cpp` 构造公共的探针部分（`app/probe.hpp`）和这块板另有的部件（无线、状态灯等，`app/part.hpp`），再运行主循环。增加一种板子需要新建这个目录，并在 `CMakePresets.json` 里加一个 preset。
 
 ### libxr 版本
 

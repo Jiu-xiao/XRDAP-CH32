@@ -372,15 +372,14 @@ void RecordRunningSlot()
 void JumpToAppThunk(void*) { JumpToApp(); }
 void NoLaunch(void*) {}
 
-void BlinkLed(uint32_t now_ms)
+void BlinkLed([[maybe_unused]] uint32_t now_ms)
 {
-#ifdef XRDAP_HAS_LED
-  const bool on = ((now_ms / kLedPeriodMs) & 1U) != 0U;
-  GPIO_WriteBit(Board::kLed.Port(), Board::kLed.Mask(),
-                on == Board::kLedActiveHigh ? Bit_SET : Bit_RESET);
-#else
-  (void)now_ms;
-#endif
+  if constexpr (Board::kLed.has_value())
+  {
+    const bool on = ((now_ms / kLedPeriodMs) & 1U) != 0U;
+    GPIO_WriteBit(Board::kLed->pin.Port(), Board::kLed->pin.Mask(),
+                  on == Board::kLed->active_high ? Bit_SET : Bit_RESET);
+  }
 }
 }  // namespace
 
@@ -410,9 +409,10 @@ extern "C" void bootloader_main()
     JumpToApp();
   }
 
-#ifdef XRDAP_HAS_LED
-  ConfigurePin(Board::kLed, GPIO_Mode_Out_PP);
-#endif
+  if constexpr (Board::kLed.has_value())
+  {
+    ConfigurePin(Board::kLed->pin, GPIO_Mode_Out_PP);
+  }
 
   static constexpr auto kStrings = LibXR::USB::DescriptorStrings::MakeLanguagePack(
       LibXR::USB::DescriptorStrings::Language::EN_US, XrDap::kVendorName,

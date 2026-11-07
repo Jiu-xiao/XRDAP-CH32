@@ -45,8 +45,7 @@ inline constexpr BoardPin kBootKey{kPortC, 7};
 
 /// 指示灯，低电平点亮（与 PA8 合封；bootloader 用它闪烁）/ LED, lit when low (bonded
 /// to PA8; the bootloader blinks it).
-inline constexpr BoardPin kLed{kPortC, 9};
-inline constexpr bool kLedActiveHigh = false;
+inline constexpr std::optional<BoardLed> kLed = BoardLed{{kPortC, 9}, false};
 
 /// 目标 SWD：SWCLK = PB13（板上连 PA14），SWDIO = PA9（与 PA13 合封），同一个引脚双向，
 /// 推挽 / Target SWD: SWCLK = PB13 (wired to PA14), SWDIO = PA9 (bonded to PA13), one

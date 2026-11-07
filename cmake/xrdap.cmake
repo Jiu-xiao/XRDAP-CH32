@@ -4,10 +4,10 @@
 # this file before project().
 #
 # Board: XRDAP_BOARD names a directory in boards/: board.cmake (crystal, core clock, chip
-# family, memory, flash layout, boot key, the bootloader's LED (XRDAP_HAS_LED) and the
-# board's sources XRDAP_BOARD_SOURCES), board.hpp (pins and timing used by the firmware) and
-# board.cpp (the application's composition). The presets in CMakePresets.json name the
-# firmwares built from them; wdap-144 and v305-144 set XRDAP_APP_SYSCLK_HZ to 144 MHz.
+# family, memory, flash layout, boot key and the board's sources XRDAP_BOARD_SOURCES),
+# board.hpp (pins, LED and timing used by the firmware) and board.cpp (the application's
+# composition). The presets in CMakePresets.json name the firmwares built from them;
+# wdap-144 and v305-144 set XRDAP_APP_SYSCLK_HZ to 144 MHz.
 # Chip family: XRDAP_CHIP_FAMILY in board.cmake selects chips/<family>/ (WCH SDK, startup
 # file, and chip.cmake with the compiler flags); the default is ch32v30x.
 
@@ -175,9 +175,6 @@ set(XRDAP_COMMON_DEFINES
     XRDAP_BL_RECORD_SIZE=${XRDAP_BL_RECORD_SIZE}
     XRDAP_RAM_SIZE=${XRDAP_RAM_SIZE}
     XRDAP_BOARD_HEADER="board.hpp")
-if(XRDAP_HAS_LED)
-  list(APPEND XRDAP_COMMON_DEFINES XRDAP_HAS_LED)
-endif()
 list(APPEND XRDAP_COMMON_DEFINES XRDAP_BOOT_REQUEST_MAGIC0=${XRDAP_BOOT_REQUEST_MAGIC0}u
      XRDAP_BOOT_REQUEST_MAGIC1=${XRDAP_BOOT_REQUEST_MAGIC1}u)
 

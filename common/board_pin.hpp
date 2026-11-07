@@ -9,6 +9,7 @@
 // 引脚，驱动再换算成 WCH 寄存器块和位掩码。
 
 #include <cstdint>
+#include <optional>
 
 #include "xrdap_chip.h"
 
@@ -22,6 +23,15 @@ struct BoardPin
 
   GPIO_TypeDef* Port() const { return reinterpret_cast<GPIO_TypeDef*>(port); }
   uint16_t Mask() const { return static_cast<uint16_t>(1U << pin); }
+};
+
+/// 单色指示灯：引脚和点亮它的电平。板子没有时 board.hpp 写 std::nullopt。 / A single
+/// LED: its pin and the level that lights it. A board without one writes std::nullopt in
+/// board.hpp.
+struct BoardLed
+{
+  BoardPin pin;
+  bool active_high;
 };
 
 inline constexpr uintptr_t kPortA = GPIOA_BASE;
