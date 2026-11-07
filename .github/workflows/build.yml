@@ -58,17 +58,23 @@ jobs:
         with:
           name: xrdap-ch32-${{ github.sha }}
           path: images
-      # One archive per board: the images have the same names on every board, and
-      # dfu_update.py --bootloader-dir looks for them by these names.
-      - name: Package the images
+      # Single files named after the firmware (the preset): the application <name>.bin and
+      # <name>-boot-chain.bin, -bootloader-a.bin, -bootloader-b.bin, -migrate-to-ab.bin.
+      # dfu_update.py --with-bootloader finds the slot images next to <name>.bin.
+      - name: Collect the images
         run: |
           mkdir release
           for dir in images/*/; do
             name="xrdap-ch32-$(basename "$dir")"
-            mkdir "$name"
-            cp "$dir"* LICENSE tools/dfu_update.py "$name/"
-            zip -r "release/$name.zip" "$name"
+            cp "${dir}xrdap.elf.bin" "release/$name.bin"
+            cp "${dir}boot-chain.bin" "release/$name-boot-chain.bin"
+            cp "${dir}bootloader-a.elf.bin" "release/$name-bootloader-a.bin"
+            cp "${dir}bootloader-b.elf.bin" "release/$name-bootloader-b.bin"
+            if [ -f "${dir}migrate-to-ab.elf.bin" ]; then
+              cp "${dir}migrate-to-ab.elf.bin" "release/$name-migrate-to-ab.bin"
+            fi
           done
+          cp tools/dfu_update.py release/
           cd release && sha256sum * > SHA256SUMS && cat SHA256SUMS
       # A draft: the release text is added by hand before it is published.
       - name: Create the draft release

@@ -8,24 +8,27 @@ probe in does the same); wait for the bootloader (1209:3072, or --bootloader); d
 DFU 1.1 DNLOAD blocks; finish with an empty DNLOAD. The bootloader then writes the seal
 record and starts the new application.
 
+  python tools/dfu_update.py xrdap-ch32-wdap.bin
   python tools/dfu_update.py build/images/wdap/xrdap.elf.bin
   python tools/dfu_update.py --detach-only
 
-With the A/B boot chain (wdap, v305, linkw; bootloader/), --bootloader-dir also updates the
+With the A/B boot chain (wdap, v305, linkw; bootloader/), --with-bootloader also updates the
 bootloader: the running bootloader names the slot it can write (DFU interface 1,
 "XR-DAP bootloader slot A" or "... slot B"); when the version in the image for that slot
 differs from the running one (USB product string), the image goes to interface 1, the
 bootloader closes the slot and restarts in DFU mode under the new bootloader, and the
-application follows:
+application follows. The slot images are found next to the application image: for the
+release file <name>.bin they are <name>-bootloader-a.bin and <name>-bootloader-b.bin, in
+build/images/<preset>/ bootloader-a.elf.bin and bootloader-b.elf.bin:
 
-  python tools/dfu_update.py --bootloader-dir build/bootloader-wdap build/app-wdap/xrdap.elf.bin
+  python tools/dfu_update.py --with-bootloader xrdap-ch32-wdap.bin
 
 A v305 board with the earlier three-stage bootloader (1209:3070), which
 does not start the application by itself, migrates to the A/B boot chain with
 migrate-to-ab; --run-app sends its RUN_APP request (vendor request 0x5A) after the
 download, and --upload reads the image in the application window back first:
 
-  python tools/dfu_update.py --bootloader 1209:3070 --run-app build/bootloader-v305/migrate-to-ab.elf.bin
+  python tools/dfu_update.py --bootloader 1209:3070 --run-app xrdap-ch32-v305-migrate-to-ab.bin
 
 Needs pyusb and libusb-package (pip install pyusb libusb-package). On Windows the
 probe announces WinUSB, so no driver installation is required.
@@ -253,7 +256,20 @@ def image_version(image):
         start = i + 1
 
 
-def update_bootloader(directory, serial, force):
+def bootloader_image(app_image, slot):
+    """The image for bootloader slot `slot` ("a" or "b") next to the application image:
+    <name>-bootloader-<slot>.bin beside the release file <name>.bin, or
+    bootloader-<slot>.elf.bin in build/images/<preset>/. None when neither exists."""
+    directory = os.path.dirname(os.path.abspath(app_image))
+    stem = os.path.splitext(os.path.basename(app_image))[0]
+    for candidate in (f"{stem}-bootloader-{slot}.bin", f"bootloader-{slot}.elf.bin"):
+        full = os.path.join(directory, candidate)
+        if os.path.isfile(full):
+            return full
+    return None
+
+
+def update_bootloader(app_image, serial, force):
     """Writes the bootloader image for the slot the running bootloader offers, when its
     version differs (or with force); returns True when the bootloader was replaced."""
     dev = wait_for(BOOTLOADER_ID, serial, 30)
@@ -270,14 +286,9 @@ def update_bootloader(directory, serial, force):
         raise RuntimeError("this bootloader cannot replace itself (it predates the A/B boot "
                            "chain): write boot-chain.bin with the chip's USB loader (BOOT0) "
                            "or a WCH-Link first")
-    path = None
-    for candidate in (f"bootloader-{slot}.elf.bin", f"bootloader-{slot}.bin"):
-        full = os.path.join(directory, candidate)
-        if os.path.isfile(full):
-            path = full
-            break
+    path = bootloader_image(app_image, slot)
     if path is None:
-        raise RuntimeError(f"no bootloader-{slot}.elf.bin in {directory}")
+        raise RuntimeError(f"no image for bootloader slot {slot.upper()} next to {app_image}")
     new = image_version(open(path, "rb").read())
     if new == running and not force:
         print(f"bootloader {running} is current")
@@ -307,24 +318,27 @@ def main():
     ap.add_argument("--upload", metavar="FILE", help="read the current image back first")
     ap.add_argument("--run-app", action="store_true",
                     help="send RUN_APP after the download (the earlier three-stage bootloader)")
-    ap.add_argument("--bootloader-dir", metavar="DIR",
-                    help="also update the bootloader from DIR/bootloader-a|b.elf.bin (A/B boot chain)")
+    ap.add_argument("--with-bootloader", action="store_true",
+                    help="also update the bootloader from the slot images next to the "
+                         "application image (A/B boot chain)")
     ap.add_argument("--force-bootloader", action="store_true",
                     help="write the bootloader even when its version is the running one")
     args = ap.parse_args()
     global BOOTLOADER_ID
     BOOTLOADER_ID = tuple(int(x, 16) for x in args.bootloader.split(":"))
     # Check the arguments before the DETACH, which leaves the probe in the bootloader.
-    if not args.image and not args.detach_only and not args.run_app and not args.bootloader_dir:
+    if not args.image and not args.detach_only and not args.run_app:
         ap.error("image is required")
-    detach(args.serial)
-    if args.bootloader_dir:
-        update_bootloader(args.bootloader_dir, args.serial, args.force_bootloader)
+    if args.with_bootloader:
         if not args.image:
-            run_app(args.serial)
-            ok = wait_for(APP_ID, args.serial, 10) is not None
-            print("application running" if ok else "application did not appear")
-            return 0 if ok else 1
+            ap.error("--with-bootloader needs the application image")
+        missing = [s for s in "ab" if bootloader_image(args.image, s) is None]
+        if missing:
+            ap.error("no image for bootloader slot " + " and ".join(s.upper() for s in missing)
+                     + f" next to {args.image}")
+    detach(args.serial)
+    if args.with_bootloader:
+        update_bootloader(args.image, args.serial, args.force_bootloader)
     if args.detach_only:
         ok = wait_for(BOOTLOADER_ID, args.serial, 10) is not None
         print("bootloader running" if ok else "bootloader did not appear")

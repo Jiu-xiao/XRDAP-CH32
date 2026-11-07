@@ -18,21 +18,21 @@ CH32V307 和 CH32V305 的标称主频是 144 MHz。SWD 由 GPIO 软件产生，�
 
 ## 烧录和升级
 
-每个发布版本为每种固件提供一个压缩包 `xrdap-ch32-<固件>.zip`，其中有启动链 `boot-chain.bin`、应用 `xrdap.elf.bin`、两个引导槽的镜像、升级脚本 `dfu_update.py` 和 `LICENSE`。
+每个发布版本为每种固件（`<固件>` 为 `wdap`、`wdap-144`、`v305`、`v305-144` 或 `linkw`）提供应用 `xrdap-ch32-<固件>.bin`、启动链 `xrdap-ch32-<固件>-boot-chain.bin`、两个引导槽的镜像 `xrdap-ch32-<固件>-bootloader-a.bin` 和 `xrdap-ch32-<固件>-bootloader-b.bin`，以及迁移镜像 `xrdap-ch32-<固件>-migrate-to-ab.bin`（`linkw` 没有）。升级脚本 `dfu_update.py` 和校验和 `SHA256SUMS` 为所有固件共用。
 
-新板子先写入启动链。启动链由地址 0 的 stage1 和一个 USB DFU bootloader 组成，可以用 WCH-Link 写入，例如用 MounRiver Studio 带的 WCH OpenOCD 和本仓库的 `tools/wch-riscv.cfg`：
+新板子先写入启动链。启动链由地址 0 的 stage1 和一个 USB DFU bootloader 组成，可以用 WCH-Link 写入，例如用 MounRiver Studio 带的 WCH OpenOCD 和本仓库的 `tools/wch-riscv.cfg` 写入 `wdap` 的启动链：
 
 ```
-openocd -f tools/wch-riscv.cfg -c init -c halt -c "flash erase_sector wch_riscv.flash 0 last" -c "program boot-chain.bin 0x00000000 verify" -c "reset run" -c shutdown
+openocd -f tools/wch-riscv.cfg -c init -c halt -c "flash erase_sector wch_riscv.flash 0 last" -c "program xrdap-ch32-wdap-boot-chain.bin 0x00000000 verify" -c "reset run" -c shutdown
 ```
 
 `v305`、`linkw`、没有焊调试排针的板子和装着旧版固件的板子另有写法，见 [docs/boot.md](docs/boot.md)。
 
-此后升级只需要 USB 线。`dfu_update.py` 让运行中的探针重启进入 bootloader，写入应用后启动它；`--bootloader-dir` 同时升级 bootloader，接了多块探针时用 `--serial` 选择：
+此后升级只需要 USB 线。`dfu_update.py` 让运行中的探针重启进入 bootloader，写入应用后启动它；`--with-bootloader` 同时用同一目录下的两个引导槽镜像升级 bootloader，接了多块探针时用 `--serial` 选择。以 `wdap` 为例：
 
 ```
 pip install pyusb libusb-package
-python dfu_update.py --bootloader-dir . xrdap.elf.bin
+python dfu_update.py --with-bootloader xrdap-ch32-wdap.bin
 ```
 
 dfu-util 同样可以写入，命令见 [docs/boot.md](docs/boot.md)。上电时按住板上的 bootloader 键，bootloader 停在 DFU 模式，不启动应用。
