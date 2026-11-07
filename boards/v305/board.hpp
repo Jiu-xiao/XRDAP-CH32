@@ -82,8 +82,8 @@ inline void Init()
 {
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
   GPIO_PinRemapConfig(GPIO_Remap_SWJ_Disable, ENABLE);
-  static LibXR::CH32GPIO power_5v(kPowerEnable5v.Port(), kPowerEnable5v.Mask());
-  static LibXR::CH32GPIO power_3v3(kPowerEnable3v3.Port(), kPowerEnable3v3.Mask());
+  LibXR::CH32GPIO power_5v(kPowerEnable5v.Port(), kPowerEnable5v.Mask());
+  LibXR::CH32GPIO power_3v3(kPowerEnable3v3.Port(), kPowerEnable3v3.Mask());
   power_5v.Write(false);
   power_3v3.Write(false);
 }
