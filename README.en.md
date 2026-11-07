@@ -1,4 +1,4 @@
-# XRDAP-CH32V3
+# XRDAP-CH32
 
 [中文](README.md)
 
@@ -14,7 +14,7 @@ The firmware is built per board. `wdap`, `v305` and `linkw` are the probe boards
 
 ## 1. Getting started
 
-Every release has one archive per board, `xrdap-ch32v3-<board>.zip`, with the images named below, `dfu_update.py` (`tools/dfu_update.py` in the repository) and `LICENSE`; `SHA256SUMS` lists the checksums of the archives. Section 4 describes building from source.
+Every release has one archive per board, `xrdap-ch32-<board>.zip`, with the images named below, `dfu_update.py` (`tools/dfu_update.py` in the repository) and `LICENSE`; `SHA256SUMS` lists the checksums of the archives. Section 4 describes building from source.
 
 ### Wiring
 
@@ -182,8 +182,8 @@ The SWD clock is made in software on GPIO: a setting at or above the speed of th
 CMake 3.21 or newer and WCH RISC-V GCC 15.2 or newer are needed (`riscv32-wch-elf-gcc` on `PATH`, or `-DCOMPILER_PREFIX=<path>/riscv32-wch-elf-`). Each firmware is a preset in `CMakePresets.json`: `wdap`, `wdap-144`, `v305`, `v305-144` and `linkw` (`cmake --list-presets` lists them). Building a preset gives the application and the board's boot chain; the boot chain (`bootloader/`) is a CMake project of its own, which the application project runs:
 
 ```
-git clone --recursive https://github.com/Jiu-xiao/XRDAP-CH32V3.git
-cd XRDAP-CH32V3
+git clone --recursive https://github.com/Jiu-xiao/XRDAP-CH32.git
+cd XRDAP-CH32
 cmake --preset wdap
 cmake --build --preset wdap
 ```

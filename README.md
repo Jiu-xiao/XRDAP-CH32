@@ -1,4 +1,4 @@
-# XRDAP-CH32V3
+# XRDAP-CH32
 
 [English](README.en.md)
 
@@ -14,7 +14,7 @@
 
 ## 1. 准备
 
-每个发布版本按板子各有一个压缩包 `xrdap-ch32v3-<板子>.zip`，里面有下面提到的镜像、`dfu_update.py`（仓库里的 `tools/dfu_update.py`）和 `LICENSE`；`SHA256SUMS` 列出各压缩包的校验和。从源码编译见第 4 节。
+每个发布版本按板子各有一个压缩包 `xrdap-ch32-<板子>.zip`，里面有下面提到的镜像、`dfu_update.py`（仓库里的 `tools/dfu_update.py`）和 `LICENSE`；`SHA256SUMS` 列出各压缩包的校验和。从源码编译见第 4 节。
 
 ### 接线
 
@@ -182,8 +182,8 @@ SWD 由 GPIO 软件产生：设定值不低于不加延时路径的速度（`wda
 需要 CMake 3.21 以上和 WCH RISC-V GCC 15.2 以上（`riscv32-wch-elf-gcc` 在 `PATH` 里，或用 `-DCOMPILER_PREFIX=<路径>/riscv32-wch-elf-` 指定）。每种固件是 `CMakePresets.json` 里的一个 preset：`wdap`、`wdap-144`、`v305`、`v305-144` 和 `linkw`（`cmake --list-presets` 列出）。编译一个 preset 得到应用和这块板的启动链；启动链（`bootloader/`）是单独的 CMake 工程，由应用工程调起：
 
 ```
-git clone --recursive https://github.com/Jiu-xiao/XRDAP-CH32V3.git
-cd XRDAP-CH32V3
+git clone --recursive https://github.com/Jiu-xiao/XRDAP-CH32.git
+cd XRDAP-CH32
 cmake --preset wdap
 cmake --build --preset wdap
 ```

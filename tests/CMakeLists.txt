@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.20)
 # registers and of V208Radio, on the build machine with its own compiler. The radio link's
 # logic is tested in XRDAP-Core.
 #   cmake -S tests -B build/tests && cmake --build build/tests && ctest --test-dir build/tests
-project(xrdap_ch32v3_tests CXX)
+project(xrdap_ch32_tests CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

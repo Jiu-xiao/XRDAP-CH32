@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.20)
 get_filename_component(XRDAP_ROOT "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 include("${XRDAP_ROOT}/cmake/xrdap.cmake")
 
-project(xrdap_ch32v3_bootloader C CXX ASM)
+project(xrdap_ch32_bootloader C CXX ASM)
 xrdap_setup_flags(Os)
 xrdap_setup_libraries()
 

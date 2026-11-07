@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.20)
 # (bootloader/, a project of its own) in <build>/bootloader/.
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/xrdap.cmake")
 
-project(xrdap_ch32v3 VERSION ${XRDAP_VERSION} LANGUAGES C CXX ASM)
+project(xrdap_ch32 VERSION ${XRDAP_VERSION} LANGUAGES C CXX ASM)
 message(STATUS "XR-DAP firmware version ${XRDAP_FIRMWARE_VERSION}")
 xrdap_setup_flags(O2)
 xrdap_setup_libraries()
