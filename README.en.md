@@ -36,7 +36,7 @@ A new board first gets the boot chain. A WCH-Link writes it, for example the boo
 openocd -f tools/wch-riscv.cfg -c init -c halt -c "flash erase_sector wch_riscv.flash 0 last" -c "program xrdap-ch32-wdap-boot-chain.bin 0x00000000 verify" -c "reset run" -c shutdown
 ```
 
-The bootloader then stays in DFU mode, and the firmware is written as above. `v305`, `linkw`, boards without a debug header and boards with older firmware are written differently; see [docs/boot.en.md](docs/boot.en.md).
+The bootloader then stays in DFU mode, and the firmware is written as above. `v305`, `linkw` (factory WCH-LinkE and WCH-LinkW included), boards without a debug header and boards with older firmware are written differently; see [docs/boot.en.md](docs/boot.en.md).
 
 With the board's bootloader key held at power-up, the bootloader stays in DFU mode and does not start the firmware; this is the way back when the firmware does not start or a write was interrupted.
 

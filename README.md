@@ -36,7 +36,7 @@ CH32V307 和 CH32V305 的标称主频是 144 MHz。SWD 由 GPIO 软件产生，�
 openocd -f tools/wch-riscv.cfg -c init -c halt -c "flash erase_sector wch_riscv.flash 0 last" -c "program xrdap-ch32-wdap-boot-chain.bin 0x00000000 verify" -c "reset run" -c shutdown
 ```
 
-写入后 bootloader 停在 DFU 模式，再按上面的方法写入固件。`v305`、`linkw`、没有焊调试排针的板子和装着旧版固件的板子另有写法，见 [docs/boot.md](docs/boot.md)。
+写入后 bootloader 停在 DFU 模式，再按上面的方法写入固件。`v305`、`linkw`（包括原厂的 WCH-LinkE、WCH-LinkW）、没有焊调试排针的板子和装着旧版固件的板子另有写法，见 [docs/boot.md](docs/boot.md)。
 
 上电时按住板上的 bootloader 键，bootloader 停在 DFU 模式，不启动固件；固件无法启动或写入中断时，用这种方式进入 bootloader 后重新写入。
 

@@ -77,6 +77,18 @@ openocd -f tools/wch-riscv.cfg -c init -c halt -c "flash erase_sector wch_riscv.
 
 `linkw` 用芯片自带的 USB 下载模式：按住 BOOT 键插上 USB，电脑上出现 `1a86:55E0`，用 WCHISPTool_CH32Vxxx（芯片 CH32V208，下载方式 USB，不开读保护）写入。出厂的 WCH-LinkW 开着读保护，工具拒绝写入；先执行“解除代码保护”，这一步擦除 Flash 并让芯片退出下载模式，再按住 BOOT 重新插上 USB 后写入。
 
+### 原厂 WCH-LinkE 和 WCH-LinkW
+
+`v305`、`linkw` 的电路分别与 WCH-LinkE、WCH-LinkW 相同，原厂的这两种调试器写入 `v305`、`linkw` 固件后同样作为 XR-DAP 使用。原厂固件换成本仓库的固件时，第一次同样写入启动链。WCH-LinkW 按上一段的步骤写入。
+
+CH32V305FBP6 没有引出 BOOT0，芯片内部把它下拉到 GND，WCH-LinkE 因此不能进入芯片自带的 USB 下载模式，由另一个 WCH-LinkE 经调试口写入。步骤与 WCH《WCH-Link 使用说明》中的“两线方式离线更新”相同，写入的文件换成启动链：
+
+1. 两个 WCH-LinkE 的 3V3、GND、SWDIO、SWCLK 对应相连，作为调试器的那个（RISC-V 模式）插在电脑上；
+2. 按住要改写的 WCH-LinkE 的 IAP 键，把它也插上 USB，蓝灯闪烁时它处于原厂固件的 IAP 模式；
+3. 在 WCH-LinkUtility 中选择芯片 CH32V30x，执行 Target → Clear All Code Flash-By Power off，擦除整片 Flash；
+4. 解除芯片读保护；
+5. 勾选 Program、Verify、Reset and run，把 `xrdap-ch32-v305-boot-chain.bin` 写到 `0x08000000`。
+
 ## 从旧版固件迁移
 
 装着旧版单个 bootloader（地址 0，应用在 `0x00010000`）的板子不需要调试器：用本仓库的 `tools/dfu_update.py` 写入 `xrdap-ch32-<板子>-migrate-to-ab.bin`，旧 bootloader 把它当作应用启动，它写入启动链后重启，新的 bootloader 停在 DFU 模式。这一步中途断电会使板子没有可用的 bootloader，只能按上一节重新写入启动链。设置区的位置不变，但 0.6 之前的设置格式不同，两块无线探针需要重新配对。

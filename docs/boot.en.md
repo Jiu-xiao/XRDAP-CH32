@@ -77,6 +77,18 @@ A `wdap` without a debug header can use the chip's USB download mode: with BOOT0
 
 `linkw` uses the chip's USB download mode: with the BOOT key held while USB is plugged in the computer sees `1a86:55E0`, and WCHISPTool_CH32Vxxx (chip CH32V208, download over USB, no read protection) writes the image. A WCH-LinkW leaves the factory with read protection on, and the tool refuses to write; "remove code protection" erases the flash and takes the chip out of download mode, after which the BOOT key is held again while USB is plugged in and the image is written.
 
+### Factory WCH-LinkE and WCH-LinkW
+
+`v305` and `linkw` share their circuits with the WCH-LinkE and the WCH-LinkW, so a factory WCH-LinkE or WCH-LinkW works as an XR-DAP once it has the `v305` or `linkw` firmware. When the factory firmware is replaced with this repository's firmware, the first image is again the boot chain. A WCH-LinkW is written as in the previous paragraph.
+
+The CH32V305FBP6 does not bring BOOT0 out; the chip pulls it to GND internally, so a WCH-LinkE cannot enter the chip's USB download mode and is written through its debug port by a second WCH-LinkE. The steps are those of the two-wire offline update in WCH's WCH-Link user manual, with the boot chain as the file:
+
+1. The 3V3, GND, SWDIO and SWCLK of the two WCH-LinkEs are wired together, and the one acting as debugger (RISC-V mode) is plugged into the computer.
+2. The WCH-LinkE to be rewritten is plugged into USB with its IAP key held; when its blue LED blinks it is in the IAP mode of the factory firmware.
+3. In WCH-LinkUtility, with chip CH32V30x selected, Target → Clear All Code Flash-By Power off erases the whole flash.
+4. The chip's read protection is removed.
+5. With Program, Verify and Reset and run ticked, `xrdap-ch32-v305-boot-chain.bin` is written to `0x08000000`.
+
 ## Migration from older firmware
 
 A board with the older single bootloader (at address 0, application at `0x00010000`) needs no debugger: this repository's `tools/dfu_update.py` writes `xrdap-ch32-<board>-migrate-to-ab.bin`, the old bootloader starts it as an application, and it writes the boot chain and restarts; the new bootloader stays in DFU mode. A power failure during this step leaves the board without a bootloader, and only the previous section's methods write the boot chain again. The settings stay where they are, but their format before 0.6 differs, so the two probes of a wireless pair are paired again.
