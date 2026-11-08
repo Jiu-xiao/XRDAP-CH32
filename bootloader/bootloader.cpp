@@ -55,6 +55,7 @@ constexpr uint32_t kLedPeriodMs = 250U;
 // The bootloader restarts this long after it closed the other slot, once the host has
 // read the final DFU status.
 constexpr uint32_t kRestartAfterSlotMs = 500U;
+constexpr uint32_t kLaunchAfterSealMs = 2000U;
 
 constexpr Slots::Slot kSelf = XRDAP_BL_SLOT == 0 ? Slots::Slot::A : Slots::Slot::B;
 constexpr Slots::Slot kPeer = Slots::Other(kSelf);
@@ -107,6 +108,7 @@ class AppWindowFlash : public LibXR::Flash
 
   LibXR::ErrorCode Erase(size_t offset, size_t size) override
   {
+    sealed_ = false;
     if (Layout::OverlapsConfig(static_cast<uint32_t>(offset),
                                static_cast<uint32_t>(size)))
     {
@@ -117,12 +119,15 @@ class AppWindowFlash : public LibXR::Flash
 
   LibXR::ErrorCode Write(size_t offset, LibXR::ConstRawData data) override
   {
+    sealed_ = false;
     if (Layout::OverlapsConfig(static_cast<uint32_t>(offset),
                                static_cast<uint32_t>(data.size_)))
     {
       return LibXR::ErrorCode::OUT_OF_RANGE;
     }
-    return flash_.Write(offset, data);
+    const auto ec = flash_.Write(offset, data);
+    sealed_ = ec == LibXR::ErrorCode::OK && offset == Layout::kSealOffset;
+    return ec;
   }
 
   LibXR::ErrorCode Read(size_t offset, LibXR::RawData data) override
@@ -130,8 +135,13 @@ class AppWindowFlash : public LibXR::Flash
     return flash_.Read(offset, data);
   }
 
+  // True from LibXR's seal write at the end of a download until the next erase or write:
+  // the window then holds a complete new image.
+  bool Sealed() const { return sealed_; }
+
  private:
   LibXR::Flash& flash_;
+  bool sealed_ = false;
 };
 
 // The other bootloader slot behind DFU interface 1. A download that starts at offset 0
@@ -410,6 +420,8 @@ extern "C" void bootloader_main()
 
   uint32_t closed_at_ms = 0U;
   bool restart_pending = false;
+  uint32_t sealed_at_ms = 0U;
+  bool sealed = false;
   for (;;)
   {
     const auto now_ms = static_cast<uint32_t>(LibXR::Timebase::GetMilliseconds());
@@ -426,6 +438,21 @@ extern "C" void bootloader_main()
       RestartInDfu();
     }
     if (dfu.TryConsumeAppLaunch(now_ms) && AppVectorsPlausible() && dfu.HasValidImage())
+    {
+      JumpToApp();
+    }
+    // A host that polls the status after the download starts the new application above.
+    // DFU 1.1 has a device that is not manifestation tolerant wait for a USB reset after
+    // the manifestation instead; some hosts send none (WebUSB on Windows cannot reset the
+    // device) and some never ask for the status again. The application therefore also
+    // starts kLaunchAfterSealMs after its seal, unless another download began.
+    if (app_window.Sealed() != sealed)
+    {
+      sealed = !sealed;
+      sealed_at_ms = now_ms;
+    }
+    if (sealed && now_ms - sealed_at_ms >= kLaunchAfterSealMs && AppVectorsPlausible() &&
+        dfu.HasValidImage())
     {
       JumpToApp();
     }
