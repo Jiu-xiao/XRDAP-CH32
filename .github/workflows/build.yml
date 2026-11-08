@@ -6,6 +6,17 @@ on:
   workflow_dispatch:
 
 jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: clang-format 21.1.8 (libxr configuration), without the WCH SDK in chips/
+        run: |
+          pip install clang-format==21.1.8
+          git ls-files '*.hpp' '*.cpp' '*.h' '*.c' \
+            ':!:chips/*/Core/*' ':!:chips/*/Peripheral/*' \
+            | xargs clang-format --dry-run --Werror
+
   build:
     runs-on: ubuntu-latest
     # WCH GCC 15.2 (riscv32-wch-elf-*) and CMake, from xrobot-org/Docker-Image, pinned by
@@ -16,23 +27,63 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-      - name: Build bootloaders and applications (evt, wdap, v305)
+      - name: Build the boot chain and the application of every preset in CMakePresets.json
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          tools/build.sh evt wdap v305
+          tools/build.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: xrdap-ch32v3-${{ github.sha }}
+          name: xrdap-ch32-${{ github.sha }}
           path: build/images/
 
   tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - name: PC tests of the pure logic
         run: |
           cmake -S tests -B build/tests
           cmake --build build/tests
           ctest --test-dir build/tests --output-on-failure
+      - name: Tests of the update page's DFU part
+        run: node --test web/test/dfu.test.mjs
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [format, build, tests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: xrdap-ch32-${{ github.sha }}
+          path: images
+      # Single files: the application of each firmware (preset), xrdap-ch32-<preset>.bin, and
+      # the boot images once per board (XRDAP_BOARD of the preset),
+      # xrdap-ch32-<board>-boot-chain.bin, -bootloader-a.bin, -bootloader-b.bin and
+      # -migrate-to-ab.bin. The presets of one board build the same boot images; cmp fails the
+      # job if they ever differ.
+      - name: Collect the images
+        run: |
+          mkdir release
+          for dir in images/*/; do
+            preset=$(basename "$dir")
+            board=$(python3 -c "import json,sys; p={x['name']: x for x in json.load(open('CMakePresets.json'))['configurePresets']}; print(p[sys.argv[1]]['cacheVariables']['XRDAP_BOARD'])" "$preset")
+            cp "${dir}xrdap.elf.bin" "release/xrdap-ch32-$preset.bin"
+            for pair in boot-chain.bin:boot-chain bootloader-a.elf.bin:bootloader-a \
+                        bootloader-b.elf.bin:bootloader-b migrate-to-ab.elf.bin:migrate-to-ab; do
+              src="${dir}${pair%%:*}"
+              dst="release/xrdap-ch32-$board-${pair##*:}.bin"
+              [ -f "$src" ] || continue
+              if [ -f "$dst" ]; then cmp "$src" "$dst"; else cp "$src" "$dst"; fi
+            done
+          done
+          cd release && sha256sum * > SHA256SUMS && cat SHA256SUMS
+      # A draft: the release text is added by hand before it is published.
+      - name: Create the draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          draft: true
