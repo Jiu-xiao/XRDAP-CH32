@@ -14,7 +14,7 @@ XRDAP-CH32 是运行在沁恒 CH32V307、CH32V305 和 CH32V208 上的 CMSIS-DAP 
 | `v305-144` | 同上 | CH32V305FBP6，144 MHz | 高速 480 Mbit/s | 无 |
 | `linkw` | WCH-LinkW-R0-1v1 | CH32V208GBU6，144 MHz | 全速 12 Mbit/s | 芯片自带射频 |
 
-CH32V307 和 CH32V305 的标称主频是 144 MHz。SWD 由 GPIO 软件产生，速度与主频成正比，所以 `wdap` 和 `v305` 跑在 216 MHz；芯片在这个主频下温度较高，可能出现重启。`wdap-144` 和 `v305-144` 是同一块板子跑在标称主频的版本。各板的引脚、指示灯和按键见 [docs/boards.md](docs/boards.md)。
+CH32V307 和 CH32V305 的标称主频是 144 MHz。SWD 由 GPIO 软件产生，速度与主频成正比，所以 `wdap` 和 `v305` 运行在 216 MHz；芯片在这个主频下温度较高，可能出现重启。`wdap-144` 和 `v305-144` 是同一块板子运行在标称主频的版本。各板的引脚、指示灯和按键见 [docs/boards.md](docs/boards.md)。
 
 ## 烧录和升级
 

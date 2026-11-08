@@ -6,7 +6,7 @@
 
 ## wdap
 
-“高速无线 DAP 调试器”板：CH32V307RCT6，12 MHz 晶振，USB 高速，SX1281 射频模块，产品名 `XR-DAP-V307`。固件 `wdap` 跑在 216 MHz，`wdap-144` 跑在 144 MHz。
+“高速无线 DAP 调试器”板：CH32V307RCT6，12 MHz 晶振，USB 高速，SX1281 射频模块，产品名 `XR-DAP-V307`。固件 `wdap` 运行在 216 MHz，`wdap-144` 运行在 144 MHz。
 
 | 用途 | 位置 |
 |---|---|
@@ -25,7 +25,7 @@
 
 ## v305
 
-CH32V305 板，电路与 WCH-LinkE 相同：CH32V305FBP6，12 MHz 晶振，USB 高速，没有射频，产品名 `XR-DAP-V305`。固件 `v305` 跑在 216 MHz，`v305-144` 跑在 144 MHz。
+CH32V305 板，电路与 WCH-LinkE 相同：CH32V305FBP6，12 MHz 晶振，USB 高速，没有射频，产品名 `XR-DAP-V305`。固件 `v305` 运行在 216 MHz，`v305-144` 运行在 144 MHz。
 
 | 用途 | 引脚 |
 |---|---|
@@ -42,7 +42,7 @@ QFN28 封装中 PA9 与 PA13 合封，板上 PB13 连到 PA14，所以目标的 
 
 ## linkw
 
-WCH-LinkW-R0-1v1：CH32V208GBU6，32 MHz 晶振，USB 全速，芯片自带 2.4 GHz 射频，产品名 `XR-DAP-V208`。应用跑在芯片标称的 144 MHz。
+WCH-LinkW-R0-1v1：CH32V208GBU6，32 MHz 晶振，USB 全速，芯片自带 2.4 GHz 射频，产品名 `XR-DAP-V208`。应用运行在芯片标称的 144 MHz。
 
 | 用途 | 位置 |
 |---|---|
