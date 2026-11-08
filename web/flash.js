@@ -6,55 +6,71 @@ import * as D from "./dfu.js";
 const TEXT = {
   zh: {
     title: "XR-DAP CH32 固件升级",
-    intro: "在浏览器里经 USB 写入 XRDAP-CH32 的固件，不需要安装程序或驱动。需要 Chrome 或 Edge。",
-    noUsb: "这个浏览器不支持 WebUSB，请用 Chrome 或 Edge 打开本页。",
-    appLabel: "固件文件",
-    appHint: "发布页上的 xrdap-ch32-<固件>.bin，例如 xrdap-ch32-wdap.bin。",
+    pathLabel: "固件升级",
+    intro: "本页经 WebUSB 写入 XRDAP-CH32 的固件和 bootloader，在 Chrome 或 Edge 中运行，探针经 USB 线连接电脑。",
+    appTitle: "固件",
+    appHint: "发布页上的 xrdap-ch32-<固件>.bin，例如 xrdap-ch32-wdap.bin、xrdap-ch32-v305-144.bin。",
+    pickApp: "选择固件",
+    blTitle: "bootloader",
+    blHint: "发布说明要求升级 bootloader 时，同时选择这块板子的 xrdap-ch32-<板子>-bootloader-a.bin 和 -bootloader-b.bin。两个槽依次写入，然后写入固件。",
     blCheck: "同时升级 bootloader",
-    blHint: "选择这块板子的两个文件 xrdap-ch32-<板子>-bootloader-a.bin 和 -bootloader-b.bin。两个槽依次写入，然后写入固件。",
+    pickBl: "选择两个槽",
+    writeTitle: "写入",
+    keyHint: "设备列表中没有探针时，按住板上的 bootloader 键插上 USB，探针以名称带 DFU 的设备出现。Linux 需要 README 中的 udev 规则。",
     start: "开始写入",
     connectBl: "连接 bootloader",
-    keyHint: "列表里没有探针时，按住板上的 bootloader 键插上 USB，探针会以“… DFU”出现。Linux 需要 README 中的 udev 规则。",
-    needBl: "探针已进入刷写模式。浏览器第一次遇到这个设备时需要再授权一次：点击“连接 bootloader”，在列表中选择名称带 DFU 的设备。",
-    noApp: "请选择固件文件。",
+    logTitle: "日志",
+    footer: "源码与发布：",
+    noUsb: "这个浏览器没有 WebUSB。本页在 Chrome 或 Edge 中运行。",
+    running: "正在写入，结束后再开始下一次。",
+    needBl: "探针已进入 bootloader。浏览器第一次遇到它时需要再授权一次：点击“连接 bootloader”，在列表中选择名称带 DFU 的设备。",
+    noApp: "没有选择固件文件。",
     notApp: "{0} 不是固件文件。固件的文件名为 xrdap-ch32-<固件>.bin；启动链和迁移镜像的写法见 docs/boot.md。",
     needSlots: "升级 bootloader 需要同一块板子的 bootloader-a 和 bootloader-b 两个文件。",
     slotBoard: "bootloader 文件与固件不是同一块板子的。",
     notProbe: "所选设备不是 XR-DAP 探针。",
-    boardMismatch: "固件是 {0} 的，探针是 {1}。仍然写入吗？",
+    boardMismatch: "固件属于 {0}，探针是 {1}。仍然写入吗？",
     cancelled: "已取消。",
-    detach: "探针 {0} 进入刷写模式",
+    detach: "探针 {0} 重启进入 bootloader",
     blUp: "bootloader {0} 已就绪",
     slot: "写入 bootloader 槽 {0}：{1} → {2}",
     slotDone: "bootloader {0} 已启动",
-    slotVersion: "bootloader 报告的版本是 {0}，与文件的 {1} 不同。",
+    slotVersion: "bootloader 报告的版本是 {0}，文件中是 {1}。",
     app: "写入固件 {0}",
-    retry: "写入中断，从头再写一次（第 {0} 次）",
+    retry: "下载中断，从第一块重新写入（第 {0} 次）",
     waitApp: "等待新固件启动",
-    done: "完成：探针已运行新固件。",
-    doneNoApp: "写入完成。探针会在几秒内启动新固件；本页没有它的访问授权，所以无法确认。",
+    done: "完成：探针运行新固件。",
+    doneNoApp: "完成：固件已写入，探针在几秒内启动新固件。本页没有访问它的授权，无法确认启动。",
     failed: "失败：{0}",
-    busy: "无法打开设备，可能被其他程序占用（调试器、dfu-util 或另一个浏览器标签页）。",
-    noBl: "没有等到 bootloader。拔下探针，按住 bootloader 键插上 USB，再点“开始写入”。",
+    busy: "设备无法打开，可能被其他程序占用（调试器、dfu-util 或另一个浏览器标签页）。",
+    noBl: "没有等到 bootloader。拔下探针，按住 bootloader 键插上 USB，再点击“开始写入”。",
     noIface: "设备没有 {0} 接口。",
     lang: "English",
   },
   en: {
     title: "XR-DAP CH32 firmware update",
-    intro: "Writes XRDAP-CH32 firmware over USB from the browser, without installing a program or a driver. Needs Chrome or Edge.",
-    noUsb: "This browser has no WebUSB; open this page in Chrome or Edge.",
-    appLabel: "Firmware file",
-    appHint: "xrdap-ch32-<firmware>.bin from the release page, for example xrdap-ch32-wdap.bin.",
+    pathLabel: "Firmware update",
+    intro: "This page writes XRDAP-CH32 firmware and bootloaders over WebUSB. It runs in Chrome or Edge, with the probe on a USB cable.",
+    appTitle: "Firmware",
+    appHint: "xrdap-ch32-<firmware>.bin from the release page, for example xrdap-ch32-wdap.bin or xrdap-ch32-v305-144.bin.",
+    pickApp: "Pick firmware",
+    blTitle: "Bootloader",
+    blHint: "When the release notes ask for a bootloader update, pick the board's xrdap-ch32-<board>-bootloader-a.bin and -bootloader-b.bin as well. Both slots are written in turn, then the firmware.",
     blCheck: "Update the bootloader as well",
-    blHint: "Pick the board's two files xrdap-ch32-<board>-bootloader-a.bin and -bootloader-b.bin. Both slots are written in turn, then the firmware.",
-    start: "Start",
+    pickBl: "Pick both slots",
+    writeTitle: "Write",
+    keyHint: "If the probe is not in the device list, plug it in with the board's bootloader key held; it then appears as a device whose name has DFU. Linux needs the udev rules in the README.",
+    start: "Start writing",
     connectBl: "Connect bootloader",
-    keyHint: "If the probe is not in the list, plug it in with the board's bootloader key held; it then appears as \"… DFU\". Linux needs the udev rules in the README.",
-    needBl: "The probe is in its bootloader. The first time the browser meets this device it asks again: click \"Connect bootloader\" and pick the device whose name has DFU.",
-    noApp: "Pick the firmware file.",
+    logTitle: "Log",
+    footer: "Source and releases:",
+    noUsb: "This browser has no WebUSB. The page runs in Chrome or Edge.",
+    running: "A write is running; the next one starts after it.",
+    needBl: "The probe is in its bootloader. The first time the browser meets it, it asks for access once more: click \"Connect bootloader\" and pick the device whose name has DFU.",
+    noApp: "No firmware file is picked.",
     notApp: "{0} is not a firmware file. Firmware files are named xrdap-ch32-<firmware>.bin; docs/boot.en.md describes how the boot chain and the migration image are written.",
-    needSlots: "Updating the bootloader needs the board's bootloader-a and bootloader-b files.",
-    slotBoard: "The bootloader files are not for the same board as the firmware.",
+    needSlots: "A bootloader update needs the board's bootloader-a and bootloader-b files.",
+    slotBoard: "The bootloader files are not for the board of the firmware.",
     notProbe: "The device picked is not an XR-DAP probe.",
     boardMismatch: "The firmware is for {0}, the probe is {1}. Write it anyway?",
     cancelled: "Cancelled.",
@@ -62,15 +78,15 @@ const TEXT = {
     blUp: "Bootloader {0} ready",
     slot: "Bootloader slot {0}: {1} → {2}",
     slotDone: "Bootloader {0} started",
-    slotVersion: "The bootloader reports {0}, the file has {1}.",
+    slotVersion: "The bootloader reports {0}, the file holds {1}.",
     app: "Writing the firmware {0}",
-    retry: "The download was interrupted; starting it again (try {0})",
+    retry: "The download was interrupted; writing again from the first block (try {0})",
     waitApp: "Waiting for the new firmware",
     done: "Done: the probe runs the new firmware.",
-    doneNoApp: "Written. The probe starts the new firmware within a few seconds; this page has no access to it and cannot confirm.",
+    doneNoApp: "Done: the firmware is written and the probe starts it within a few seconds. This page has no access to it and cannot confirm the start.",
     failed: "Failed: {0}",
     busy: "The device cannot be opened; another program may hold it (a debugger, dfu-util or another browser tab).",
-    noBl: "The bootloader did not appear. Unplug the probe, plug it in with the bootloader key held and click Start again.",
+    noBl: "The bootloader did not appear. Unplug the probe, plug it in with the bootloader key held and click \"Start writing\" again.",
     noIface: "The device has no {0} interface.",
     lang: "中文",
   },
@@ -94,13 +110,13 @@ function render() {
 }
 
 function log(message, kind = "") {
+  $("logBox").hidden = false;
   const line = document.createElement("div");
   line.className = kind;
-  const time = new Date().toLocaleTimeString();
-  line.textContent = `${time}  ${message}`;
+  line.textContent = `${new Date().toLocaleTimeString()}  ${message}`;
   $("log").append(line);
   $("log").scrollTop = $("log").scrollHeight;
-  if (kind !== "detail") $("status").textContent = message;
+  $("status").textContent = message;
   $("status").className = kind;
 }
 
@@ -197,12 +213,13 @@ async function writeSlot(bootloader, slots, serial) {
   if (!next) throw new Error(t("noBl"));
   const running = D.versionOfProduct(next.productName);
   log(t("slotDone", running));
-  if (version && running !== version) log(t("slotVersion", running, version), "warn");
+  if (version && running !== version) log(t("slotVersion", running, version), "blocked");
   return next;
 }
 
 async function run() {
   $("log").textContent = "";
+  $("logBox").hidden = true;
   progress(0, 0);
   const appFile = $("app").files[0];
   if (!appFile) throw new Error(t("noApp"));
@@ -228,7 +245,7 @@ async function run() {
   if (board && board !== app.info.board &&
       !window.confirm(t("boardMismatch", BOARD_NAMES[app.info.board] || app.info.board,
                         BOARD_NAMES[board] || board))) {
-    log(t("cancelled"), "warn");
+    log(t("cancelled"), "blocked");
     return;
   }
 
@@ -246,8 +263,15 @@ async function run() {
   await dfu.close();
   log(t("waitApp"));
   const running = await waitForDevice(D.APP_ID, serial, 10000);
-  log(running ? t("done") : t("doneNoApp"), "ok");
+  log(running ? t("done") : t("doneNoApp"), "pass");
 }
+
+function showFiles() {
+  $("appName").textContent = Array.from($("app").files).map((f) => f.name).join(", ");
+  $("blName").textContent = Array.from($("bl").files).map((f) => f.name).join(", ");
+}
+
+let running = false;
 
 function init() {
   render();
@@ -258,24 +282,30 @@ function init() {
   $("withBl").onchange = () => {
     $("blBox").hidden = !$("withBl").checked;
   };
-  if (!navigator.usb) {
-    $("start").disabled = true;
-    log(t("noUsb"), "error");
-    return;
-  }
+  $("app").onchange = showFiles;
+  $("bl").onchange = showFiles;
+  // The button stays clickable; a click that cannot start says why.
   $("start").onclick = async () => {
-    $("start").disabled = true;
+    if (!navigator.usb) {
+      log(t("noUsb"), "fail");
+      return;
+    }
+    if (running) {
+      log(t("running"), "blocked");
+      return;
+    }
+    running = true;
     try {
       await run();
     } catch (error) {
       if (error && error.name === "NotFoundError" && /No device selected/i.test(error.message)) {
-        log(t("cancelled"), "warn");
+        log(t("cancelled"), "blocked");
       } else {
-        log(t("failed", error.message || error), "error");
+        log(t("failed", error.message || error), "fail");
       }
     } finally {
       $("connect").hidden = true;
-      $("start").disabled = false;
+      running = false;
     }
   };
 }

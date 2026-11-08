@@ -1,85 +1,162 @@
 <!doctype html>
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-<html lang="zh-CN">
+<!-- XRobot Style: ink on paper, right angles and the 45-degree chamfer, lines instead of shadows. -->
+<html lang="zh-CN" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>XR-DAP CH32</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22 width=%2264%22 height=%2264%22 role=%22img%22 aria-label=%22XRobot%22%3E%3Cpath fill=%22%23111312%22 fill-rule=%22evenodd%22 d=%22M14.00,14.00 L50.00,14.00 L60.00,24.00 L60.00,50.00 L50.00,60.00 L14.00,60.00 L4.00,50.00 L4.00,24.00ZM17.51,20.00 L46.49,20.00 L54.00,27.51 L54.00,46.49 L46.49,54.00 L17.51,54.00 L10.00,46.49 L10.00,27.51ZM18.00,4.00 L24.00,4.00 L24.00,14.01 L18.00,14.01ZM40.00,4.00 L46.00,4.00 L46.00,14.01 L40.00,14.01Z%22/%3E%3Cpath fill=%22%23111312%22 d=%22M24.12,24.88 L44.12,44.88 L39.88,49.12 L19.88,29.12ZM19.88,44.88 L39.88,24.88 L44.12,29.12 L24.12,49.12Z%22/%3E%3C/svg%3E">
 <style>
+  :root, [data-theme="light"] {
+    color-scheme: light;
+    --paper: #f2f3f2; --paper-raised: #ffffff; --paper-sunken: #e6e8e6;
+    --line: #d3d6d3; --line-strong: #7c827e; --ink: #111312; --ink-muted: #4d524f; --on-ink: #f2f3f2;
+    --pass: #16693a; --fail: #b42318; --blocked: #7d5100; --focus: var(--ink); --link: var(--ink);
+  }
+  [data-theme="dark"] {
+    color-scheme: dark;
+    --paper: #0c0e0d; --paper-raised: #151816; --paper-sunken: #070908;
+    --line: #2a2e2c; --line-strong: #6f7672; --ink: #e6e8e6; --ink-muted: #a3a9a5; --on-ink: #0c0e0d;
+    --pass: #5bd68a; --fail: #ff8a7a; --blocked: #f0b54a; --focus: var(--ink); --link: var(--ink);
+  }
   :root {
-    --bg: #ffffff; --fg: #1d2127; --muted: #5d6673; --line: #d9dde3; --accent: #1f6feb;
-    --ok: #1a7f37; --warn: #9a6700; --error: #cf222e; --panel: #f6f8fa;
+    --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px;
+    --space-12: 48px; --chamfer: 8px; --stroke: 1px; --stroke-strong: 2px; --measure-prose: 40em;
+    --size-control: 36px; --size-nav: 56px; --duration-fast: 80ms;
+    --font-sans: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Consolas, "Noto Sans Mono CJK SC", monospace;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0f1216; --fg: #e6e9ee; --muted: #9aa4b1; --line: #2c333c; --accent: #4c8dff;
-      --ok: #3fb950; --warn: #d29922; --error: #f85149; --panel: #161b22;
-    }
-  }
+  @media (prefers-reduced-motion: reduce) { :root { --duration-fast: 0ms; } }
+
   * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--fg);
-    font: 15px/1.6 system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 400 16px/28px var(--font-sans); }
+  [hidden] { display: none !important; }
+  nav {
+    height: var(--size-nav); display: flex; align-items: center; justify-content: space-between;
+    padding: 0 var(--space-4); background: var(--paper-raised); border-bottom: var(--stroke) solid var(--line);
   }
-  main { max-width: 720px; margin: 0 auto; padding: 32px 16px 48px; }
-  header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
-  h1 { font-size: 22px; margin: 0 0 8px; }
-  p { margin: 8px 0; }
-  .muted { color: var(--muted); font-size: 13px; }
-  section { border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin: 16px 0; }
-  label.title { display: block; font-weight: 600; margin-bottom: 6px; }
-  input[type=file] { width: 100%; }
-  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 16px; }
-  button {
-    border: 1px solid var(--accent); background: var(--accent); color: #fff; border-radius: 6px;
-    padding: 8px 18px; font-size: 15px; cursor: pointer;
+  .brand { display: flex; align-items: center; gap: var(--space-3); color: var(--ink); text-decoration: none; }
+  .brand svg { width: 32px; height: 32px; display: block; }
+  .brand span { font: 700 14px/22px var(--font-sans); }
+  main { max-width: calc(var(--measure-prose) + 2 * var(--space-4)); margin: 0 auto; padding: var(--space-12) var(--space-4); }
+  .path { font: 700 12px/16px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
+  .path .sep { color: var(--line-strong); }
+  h1 { margin: var(--space-2) 0 var(--space-4); font: 700 28px/36px var(--font-sans); }
+  .lead { margin: 0 0 var(--space-6); }
+  .card {
+    position: relative; display: flex; flex-direction: column; gap: var(--space-3);
+    padding: var(--space-4); margin-bottom: var(--space-6);
+    background: var(--paper-raised); border: var(--stroke) solid var(--line);
   }
-  button.link { background: none; border: none; color: var(--accent); padding: 0; font-size: 13px; }
-  button:disabled { opacity: 0.5; cursor: default; }
-  .track { height: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
-  #bar { height: 100%; width: 0; background: var(--accent); transition: width 0.2s; }
-  #status { min-height: 1.6em; margin-top: 10px; }
+  .card::after {
+    content: ""; position: absolute; top: calc(-1 * var(--stroke)); right: calc(-1 * var(--stroke));
+    width: var(--chamfer); height: var(--chamfer);
+    background: linear-gradient(45deg, transparent calc(50% - 0.75px), var(--line) calc(50% - 0.75px), var(--line) calc(50% + 0.75px), var(--paper) calc(50% + 0.75px));
+  }
+  .card h2 { margin: 0; font: 700 20px/28px var(--font-sans); }
+  .note { margin: 0; font: 400 14px/22px var(--font-sans); color: var(--ink-muted); }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+  .file-name { font: 400 14px/22px var(--font-mono); color: var(--ink-muted); overflow-wrap: anywhere; }
+  .check { display: flex; align-items: center; gap: var(--space-2); font: 400 14px/22px var(--font-sans); cursor: pointer; }
+  .check input { width: 16px; height: 16px; margin: 0; accent-color: var(--ink); }
+  input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; height: var(--size-control);
+    padding: 0 var(--space-4); font: 700 14px/22px var(--font-sans); white-space: nowrap; cursor: pointer;
+    border: var(--stroke) solid var(--ink); border-radius: 0; color: var(--ink); background: transparent;
+    transition: background-color var(--duration-fast) linear, color var(--duration-fast) linear;
+  }
+  .btn:hover { background: var(--ink); color: var(--on-ink); }
+  .btn.primary {
+    background: var(--ink); color: var(--on-ink);
+    clip-path: polygon(var(--chamfer) 0, 100% 0, 100% calc(100% - var(--chamfer)), calc(100% - var(--chamfer)) 100%, 0 100%, 0 var(--chamfer));
+  }
+  .btn.primary:hover { background: var(--ink-muted); border-color: var(--ink-muted); }
+  .btn.ghost { border-color: transparent; padding: 0 var(--space-2); text-decoration: underline; text-underline-offset: 4px; }
+  .btn.ghost:hover { background: transparent; color: var(--ink); text-decoration-thickness: var(--stroke-strong); }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible, .check input:focus-visible, a:focus-visible { outline: var(--stroke-strong) solid var(--focus); outline-offset: 2px; }
+
+  .track { height: 8px; border: var(--stroke) solid var(--line-strong); background: var(--paper-sunken); }
+  #bar { height: 100%; width: 0; background: var(--ink); }
+  #status { margin: 0; min-height: 22px; font: 700 14px/22px var(--font-sans); }
+  .pass { color: var(--pass); } .fail { color: var(--fail); } .blocked { color: var(--blocked); }
+  .log { background: var(--paper-sunken); border: var(--stroke) solid var(--line); }
+  .log-title {
+    padding: var(--space-2) var(--space-4); border-bottom: var(--stroke) solid var(--line);
+    font: 700 12px/16px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted);
+  }
   #log {
-    margin-top: 10px; max-height: 220px; overflow: auto; background: var(--panel);
-    border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px;
-    font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap;
+    max-height: 264px; overflow: auto; padding: var(--space-3) var(--space-4);
+    font: 400 12px/16px var(--font-mono); color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere;
   }
-  #log:empty { display: none; }
-  .ok { color: var(--ok); } .warn { color: var(--warn); } .error { color: var(--error); }
+  footer { border-top: var(--stroke) solid var(--line); background: var(--paper-sunken); }
+  footer div { max-width: calc(var(--measure-prose) + 2 * var(--space-4)); margin: 0 auto; padding: var(--space-6) var(--space-4); font: 400 14px/22px var(--font-sans); color: var(--ink-muted); }
+  a { color: var(--link); text-decoration: underline; text-decoration-thickness: var(--stroke); text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: var(--stroke-strong); }
 </style>
+<script>
+  // The theme follows the system, set before the first paint.
+  (function () {
+    var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+    function apply() { document.documentElement.dataset.theme = dark && dark.matches ? "dark" : "light"; }
+    apply();
+    if (dark && dark.addEventListener) dark.addEventListener("change", apply);
+  })();
+</script>
 </head>
 <body>
+<nav>
+  <a class="brand" href="https://github.com/Jiu-xiao/XRDAP-CH32">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M22.96,23.75 L11.50,35.21 L11.50,55.21 L7.23,59.48 L6.50,60.21 L6.50,76.29 L11.50,81.29 L11.50,89.29 L24.96,102.75 L47.96,102.75 L52.96,107.75 L67.04,107.75 L72.04,102.75 L95.04,102.75 L108.50,89.29 L108.50,81.29 L113.50,76.29 L113.50,60.21 L108.50,55.21 L108.50,35.21 L97.04,23.75 L88.50,23.75 L88.50,12.25 L83.50,12.25 L83.50,25.21 L74.96,33.75 L72.04,33.75 L67.04,28.75 L66.00,28.75 L54.00,28.75 L52.96,28.75 L47.96,33.75 L45.04,33.75 L36.50,25.21 L36.50,12.25 L31.50,12.25 L31.50,23.75ZM27.04,97.75 L16.50,87.21 L16.50,81.29 L21.50,76.29 L21.50,60.21 L16.50,55.21 L16.50,37.29 L25.04,28.75 L32.96,28.75 L42.96,38.75 L47.96,38.75 L52.96,43.75 L67.04,43.75 L72.04,38.75 L77.04,38.75 L87.04,28.75 L94.96,28.75 L103.50,37.29 L103.50,55.21 L99.23,59.48 L98.50,60.21 L98.50,76.29 L103.50,81.29 L103.50,87.21 L92.96,97.75 L72.04,97.75 L67.04,92.75 L66.00,92.75 L54.00,92.75 L52.96,92.75 L47.96,97.75ZM52.54,36.25 L55.04,33.75 L64.96,33.75 L67.46,36.25 L64.96,38.75 L55.04,38.75ZM11.50,74.21 L11.50,62.29 L14.00,59.79 L16.50,62.29 L16.50,74.21 L14.00,76.71ZM52.54,100.25 L55.04,97.75 L64.96,97.75 L67.46,100.25 L64.96,102.75 L55.04,102.75ZM103.50,74.21 L103.50,62.29 L106.00,59.79 L108.50,62.29 L108.50,74.21 L106.00,76.71ZM12.70,72.25 L15.30,72.25 L15.30,64.25 L12.70,64.25ZM37.04,54.75 L31.20,59.97 L40.38,70.54 L31.20,81.12 L37.04,86.33 L45.60,76.52 L54.16,86.40 L59.93,81.18 L50.75,70.61 L59.93,60.04 L54.16,54.82 L45.60,64.63ZM64.50,37.55 L64.50,34.95 L55.50,34.95 L55.50,37.55ZM104.70,72.25 L107.30,72.25 L107.30,64.25 L104.70,64.25ZM62.64,86.12 L70.50,86.12 L70.50,74.09 L74.68,74.09 L82.05,86.75 L88.80,82.85 L83.44,73.67 L88.24,68.94 L88.24,55.24 L67.86,55.24 L62.64,60.45ZM80.38,68.18 L70.50,68.18 L70.50,61.15 L80.38,61.15Z"/></svg>
+    <span>XR-DAP</span>
+  </a>
+  <button id="lang" class="btn ghost" type="button" data-t="lang"></button>
+</nav>
 <main>
-  <header>
-    <h1 data-t="title"></h1>
-    <button id="lang" class="link" data-t="lang"></button>
-  </header>
-  <p data-t="intro"></p>
+  <div class="path">XRDAP-CH32 <span class="sep">/</span> <span data-t="pathLabel"></span></div>
+  <h1 data-t="title"></h1>
+  <p class="lead" data-t="intro"></p>
 
-  <section>
-    <label class="title" for="app" data-t="appLabel"></label>
-    <input id="app" type="file" accept=".bin">
-    <p class="muted" data-t="appHint"></p>
-    <label><input id="withBl" type="checkbox"> <span data-t="blCheck"></span></label>
-    <div id="blBox" hidden>
-      <input id="bl" type="file" accept=".bin" multiple>
-      <p class="muted" data-t="blHint"></p>
-    </div>
-  </section>
-
-  <section>
+  <section class="card">
+    <h2 data-t="appTitle"></h2>
+    <p class="note" data-t="appHint"></p>
     <div class="row">
-      <button id="start" data-t="start"></button>
-      <button id="connect" data-t="connectBl" hidden></button>
+      <label class="btn" for="app" data-t="pickApp"></label>
+      <input id="app" type="file" accept=".bin">
+      <span id="appName" class="file-name"></span>
     </div>
-    <p class="muted" data-t="keyHint"></p>
-    <div class="track"><div id="bar"></div></div>
-    <div id="status"></div>
-    <div id="log"></div>
   </section>
 
-  <p class="muted"><a href="https://github.com/Jiu-xiao/XRDAP-CH32">XRDAP-CH32</a></p>
+  <section class="card">
+    <h2 data-t="blTitle"></h2>
+    <p class="note" data-t="blHint"></p>
+    <label class="check"><input id="withBl" type="checkbox"> <span data-t="blCheck"></span></label>
+    <div id="blBox" class="row" hidden>
+      <label class="btn" for="bl" data-t="pickBl"></label>
+      <input id="bl" type="file" accept=".bin" multiple>
+      <span id="blName" class="file-name"></span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 data-t="writeTitle"></h2>
+    <p class="note" data-t="keyHint"></p>
+    <div class="row">
+      <button id="start" class="btn primary" type="button" data-t="start"></button>
+      <button id="connect" class="btn" type="button" data-t="connectBl" hidden></button>
+    </div>
+    <div class="track"><div id="bar"></div></div>
+    <p id="status"></p>
+    <div class="log" id="logBox" hidden>
+      <div class="log-title" data-t="logTitle"></div>
+      <div id="log"></div>
+    </div>
+  </section>
 </main>
+<footer><div><span data-t="footer"></span> <a href="https://github.com/Jiu-xiao/XRDAP-CH32">github.com/Jiu-xiao/XRDAP-CH32</a></div></footer>
 <script type="module" src="flash.js"></script>
 </body>
 </html>
