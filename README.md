@@ -18,24 +18,27 @@ CH32V307 和 CH32V305 的标称主频是 144 MHz。SWD 由 GPIO 软件产生，�
 
 ## 烧录和升级
 
-每个发布版本为每种固件（`<固件>` 为 `wdap`、`wdap-144`、`v305`、`v305-144` 或 `linkw`）提供应用 `xrdap-ch32-<固件>.bin`、启动链 `xrdap-ch32-<固件>-boot-chain.bin`、两个引导槽的镜像 `xrdap-ch32-<固件>-bootloader-a.bin` 和 `xrdap-ch32-<固件>-bootloader-b.bin`，以及迁移镜像 `xrdap-ch32-<固件>-migrate-to-ab.bin`（`linkw` 没有）。升级脚本 `dfu_update.py` 和校验和 `SHA256SUMS` 为所有固件共用。
+每个发布版本提供以下文件。`<固件>` 为 `wdap`、`wdap-144`、`v305`、`v305-144` 或 `linkw`；`<板子>` 为 `wdap`、`v305` 或 `linkw`，同一块板子两种主频的固件共用这块板子的启动文件。
 
-新板子先写入启动链。启动链由地址 0 的 stage1 和一个 USB DFU bootloader 组成，可以用 WCH-Link 写入，例如用 MounRiver Studio 带的 WCH OpenOCD 和本仓库的 `tools/wch-riscv.cfg` 写入 `wdap` 的启动链：
+| 文件 | 内容 | 用途 |
+|---|---|---|
+| `xrdap-ch32-<固件>.bin` | 固件 | 每次升级 |
+| `xrdap-ch32-<板子>-bootloader-a.bin`、`xrdap-ch32-<板子>-bootloader-b.bin` | bootloader 两个槽的镜像 | 升级 bootloader，发布说明写明是否需要 |
+| `xrdap-ch32-<板子>-boot-chain.bin` | 启动链：stage1 和一份 bootloader | 新板子第一次写入 |
+| `xrdap-ch32-<板子>-migrate-to-ab.bin` | 迁移镜像（`linkw` 没有） | 装着 0.6 之前 bootloader 的板子改用新的启动链 |
+| `SHA256SUMS` | 以上文件的校验和 | |
+
+升级固件只需要 USB 线和浏览器：在 Chrome 或 Edge 中打开 [XR-DAP CH32 固件升级](https://jiu-xiao.github.io/XRDAP-CH32/)页面，选择固件文件，点击“开始写入”，在设备列表中选择探针。页面让探针重启进入 bootloader 并写入固件，探针随后启动新固件；浏览器第一次遇到某块探针的 bootloader 时需要再授权一次。勾选“同时升级 bootloader”并选择两个槽的镜像时，页面先依次写入两个槽，再写入固件。dfu-util 和本仓库的 `tools/dfu_update.py` 同样可以写入，命令见 [docs/boot.md](docs/boot.md)。
+
+新板子先写入启动链。WCH-Link 可以写入，例如用 MounRiver Studio 带的 WCH OpenOCD 和本仓库的 `tools/wch-riscv.cfg` 写入 `wdap` 的启动链：
 
 ```
 openocd -f tools/wch-riscv.cfg -c init -c halt -c "flash erase_sector wch_riscv.flash 0 last" -c "program xrdap-ch32-wdap-boot-chain.bin 0x00000000 verify" -c "reset run" -c shutdown
 ```
 
-`v305`、`linkw`、没有焊调试排针的板子和装着旧版固件的板子另有写法，见 [docs/boot.md](docs/boot.md)。
+写入后 bootloader 停在 DFU 模式，再按上面的方法写入固件。`v305`、`linkw`、没有焊调试排针的板子和装着旧版固件的板子另有写法，见 [docs/boot.md](docs/boot.md)。
 
-此后升级只需要 USB 线。`dfu_update.py` 让运行中的探针重启进入 bootloader，写入应用后启动它；`--with-bootloader` 同时用同一目录下的两个引导槽镜像升级 bootloader，接了多块探针时用 `--serial` 选择。以 `wdap` 为例：
-
-```
-pip install pyusb libusb-package
-python dfu_update.py --with-bootloader xrdap-ch32-wdap.bin
-```
-
-dfu-util 同样可以写入，命令见 [docs/boot.md](docs/boot.md)。上电时按住板上的 bootloader 键，bootloader 停在 DFU 模式，不启动应用。
+上电时按住板上的 bootloader 键，bootloader 停在 DFU 模式，不启动固件；固件无法启动或写入中断时，用这种方式进入 bootloader 后重新写入。
 
 探针在电脑上是 USB 设备 `1D50:6199`，序列号为 `XRobot-XRDAP-` 加芯片 UID；bootloader 是 `1209:3072`。Linux 上加入以下 udev 规则后，普通用户可以访问两者：
 
@@ -84,6 +87,8 @@ cmake --build build/tests
 ctest --test-dir build/tests
 ```
 
+升级网页的 DFU 部分用 Node 测试：`node --test web/test/dfu.test.mjs`。
+
 版本号是 `cmake/xrdap.cmake` 中的 `XRDAP_VERSION`，编译时附加提交号，例如 `0.6.0+g2ec5b8e`。
 
 ## 目录
@@ -98,6 +103,7 @@ ctest --test-dir build/tests
 | `cmake/xrdap.cmake` | 两个工程共用的编译设置、默认值和版本号 |
 | `tests/` | 编译机上的测试 |
 | `tools/` | 编译脚本、升级脚本、启动链打包脚本、WCH OpenOCD 配置 |
+| `web/` | 固件升级网页（WebUSB DFU），发布到 GitHub Pages；`web/test/` 用 Node 测试其中的 DFU 部分 |
 
 增加一种板子需要新建 `boards/<板子>/`，并在 `CMakePresets.json` 中加一个 preset。
 

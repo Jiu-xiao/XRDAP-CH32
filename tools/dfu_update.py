@@ -17,9 +17,9 @@ bootloader: the running bootloader names the slot it can write (DFU interface 1,
 "XR-DAP bootloader slot A" or "... slot B"); when the version in the image for that slot
 differs from the running one (USB product string), the image goes to interface 1, the
 bootloader closes the slot and restarts in DFU mode under the new bootloader, and the
-application follows. The slot images are found next to the application image: for the
-release file <name>.bin they are <name>-bootloader-a.bin and <name>-bootloader-b.bin, in
-build/images/<preset>/ bootloader-a.elf.bin and bootloader-b.elf.bin:
+application follows. The slot images are found next to the application image: beside the
+release file xrdap-ch32-<preset>.bin the board's xrdap-ch32-<board>-bootloader-a.bin and
+-bootloader-b.bin, in build/images/<preset>/ bootloader-a.elf.bin and bootloader-b.elf.bin:
 
   python tools/dfu_update.py --with-bootloader xrdap-ch32-wdap.bin
 
@@ -258,11 +258,14 @@ def image_version(image):
 
 def bootloader_image(app_image, slot):
     """The image for bootloader slot `slot` ("a" or "b") next to the application image:
-    <name>-bootloader-<slot>.bin beside the release file <name>.bin, or
-    bootloader-<slot>.elf.bin in build/images/<preset>/. None when neither exists."""
+    beside the release file xrdap-ch32-<preset>.bin the board's
+    xrdap-ch32-<board>-bootloader-<slot>.bin (the preset name with trailing "-..." parts
+    removed, e.g. wdap-144 -> wdap), or bootloader-<slot>.elf.bin in build/images/<preset>/.
+    None when there is none."""
     directory = os.path.dirname(os.path.abspath(app_image))
-    stem = os.path.splitext(os.path.basename(app_image))[0]
-    for candidate in (f"{stem}-bootloader-{slot}.bin", f"bootloader-{slot}.elf.bin"):
+    parts = os.path.splitext(os.path.basename(app_image))[0].split("-")
+    candidates = [f"{'-'.join(parts[:n])}-bootloader-{slot}.bin" for n in range(len(parts), 0, -1)]
+    for candidate in candidates + [f"bootloader-{slot}.elf.bin"]:
         full = os.path.join(directory, candidate)
         if os.path.isfile(full):
             return full

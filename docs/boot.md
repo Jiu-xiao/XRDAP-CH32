@@ -4,7 +4,7 @@
 
 本文说明 XRDAP-CH32 的启动链、Flash 布局、第一次烧录、从旧版固件迁移，以及经 USB DFU 写入应用和 bootloader 的细节。
 
-文中的文件名为发布文件名，`<固件>` 是 preset 名。`tools/build.sh` 把同样的镜像放在 `build/images/<preset>/`：应用为 `xrdap.elf.bin`，启动链为 `boot-chain.bin`，引导槽镜像为 `bootloader-a.elf.bin` 和 `bootloader-b.elf.bin`，迁移镜像为 `migrate-to-ab.elf.bin`。
+文中的文件名为发布文件名，`<固件>` 是 preset 名，`<板子>` 是板子名（`wdap`、`v305`、`linkw`）。`tools/build.sh` 把同样的镜像放在 `build/images/<preset>/`：应用为 `xrdap.elf.bin`，启动链为 `boot-chain.bin`，引导槽镜像为 `bootloader-a.elf.bin` 和 `bootloader-b.elf.bin`，迁移镜像为 `migrate-to-ab.elf.bin`。
 
 ## 启动链
 
@@ -63,7 +63,7 @@ DFU 下载只写到设置区之前，超过 `0x24700` 字节（`v305` 为 `0x1D7
 
 ## 第一次烧录
 
-第一次写入的是启动链 `xrdap-ch32-<固件>-boot-chain.bin`：stage1 和板子的首个引导槽（`v305` 为槽 B，其他板子为槽 A）。写入后应用区为空，bootloader 停在 DFU 模式，再按 README 写入应用。
+第一次写入的是启动链 `xrdap-ch32-<板子>-boot-chain.bin`：stage1 和板子的首个引导槽（`v305` 为槽 B，其他板子为槽 A）。写入后应用区为空，bootloader 停在 DFU 模式，再按 README 写入应用。
 
 用 WCH-Link 或 WCH-LinkE（RISC-V 模式）连接板子的两线调试口（SWDIO、SWCLK、GND），用 MounRiver Studio 带的 WCH OpenOCD 写入，以 `wdap` 为例：
 
@@ -79,12 +79,12 @@ openocd -f tools/wch-riscv.cfg -c init -c halt -c "flash erase_sector wch_riscv.
 
 ## 从旧版固件迁移
 
-装着旧版单个 bootloader（地址 0，应用在 `0x00010000`）的板子不需要调试器：用 `dfu_update.py` 写入 `xrdap-ch32-<固件>-migrate-to-ab.bin`，旧 bootloader 把它当作应用启动，它写入启动链后重启，新的 bootloader 停在 DFU 模式。这一步中途断电会使板子没有可用的 bootloader，只能按上一节重新写入启动链。设置区的位置不变，但 0.6 之前的设置格式不同，两块无线探针需要重新配对。
+装着旧版单个 bootloader（地址 0，应用在 `0x00010000`）的板子不需要调试器：用本仓库的 `tools/dfu_update.py` 写入 `xrdap-ch32-<板子>-migrate-to-ab.bin`，旧 bootloader 把它当作应用启动，它写入启动链后重启，新的 bootloader 停在 DFU 模式。这一步中途断电会使板子没有可用的 bootloader，只能按上一节重新写入启动链。设置区的位置不变，但 0.6 之前的设置格式不同，两块无线探针需要重新配对。
 
 装着三段式启动（USB `1209:3070`）的 `v305` 用 `v305` 的迁移镜像：
 
 ```
-python dfu_update.py --bootloader 1209:3070 --run-app xrdap-ch32-v305-migrate-to-ab.bin
+python tools/dfu_update.py --bootloader 1209:3070 --run-app xrdap-ch32-v305-migrate-to-ab.bin
 ```
 
 迁移镜像先写槽 B 并逐页校验，这期间旧的 stage1 和 bootloader 保持不变，失败时重启回旧 bootloader，可以再次执行；最后写 stage1，入口所在的一页最后修改，只有写这一页的几毫秒内断电需要用 WCH-Link 恢复。板上还是更早的应用（USB `0d28:2041`）时，按住 IAP 键上电，让三段式启动的 bootloader 停在 DFU 模式，再写迁移镜像。
@@ -93,9 +93,17 @@ python dfu_update.py --bootloader 1209:3070 --run-app xrdap-ch32-v305-migrate-to
 
 ## 写入应用和 bootloader
 
-应用除 DAP 接口外还有一个 DFU runtime 接口。`dfu_update.py` 向它发送 DFU DETACH，探针重启进入 bootloader，然后经标准 USB DFU 1.1 写入镜像；bootloader 在下载结束时写入 seal 并启动新应用。Windows 上 bootloader 声明 WinUSB，不需要另装驱动。
+应用除 DAP 接口外还有一个 DFU runtime 接口。写入工具向它发送 DFU DETACH，探针重启进入 bootloader，然后经标准 USB DFU 1.1 写入镜像。bootloader 在下载结束时写入 seal：主机随后查询状态时，它立即启动新应用；主机不再查询（Windows 上的 WebUSB 也无法复位设备）时，它在 seal 写入 2 秒后启动新应用。Windows 上 bootloader 声明 WinUSB，不需要另装驱动。
 
-DFU 模式下 bootloader 有两个接口：接口 0（`XR-DAP application`）写应用，接口 1（`XR-DAP bootloader slot A` 或 `... slot B`）写另一个引导槽。`--with-bootloader` 在应用镜像所在的目录中查找两个引导槽的镜像：发布文件 `xrdap-ch32-<固件>.bin` 旁边的 `xrdap-ch32-<固件>-bootloader-a.bin` 和 `-bootloader-b.bin`，或 `build/images/<preset>/` 中的 `bootloader-a.elf.bin` 和 `bootloader-b.elf.bin`。`dfu_update.py` 比较那个槽的镜像版本和 USB 产品名中正在运行的版本，不同时先写 bootloader：写完槽记录后 bootloader 重启，stage1 启动新的 bootloader，然后写应用。版本相同时不写 bootloader，`--force-bootloader` 强制写入。两个槽都升级时执行两次，第二次加 `--force-bootloader`。
+DFU 模式下 bootloader 有两个接口：接口 0（`XR-DAP application`）写应用，接口 1（`XR-DAP bootloader slot A` 或 `... slot B`）写另一个引导槽。写完槽记录后 bootloader 重启，stage1 启动新的 bootloader，接口 1 随之换成另一个槽；两个槽都升级时依次写入两次。
+
+升级网页（`web/`，发布在 https://jiu-xiao.github.io/XRDAP-CH32/ ）用 WebUSB 完成上述步骤。它从描述符读取接口名和 DFU 功能描述符中的传输长度，写入引导槽后等待 bootloader 重新枚举；下载中途 bootloader 回到 dfuIDLE 时，从第一块重新写入。
+
+`tools/dfu_update.py` 需要 Python 和 `pip install pyusb libusb-package`。`--with-bootloader` 在应用镜像所在的目录中查找两个引导槽的镜像：发布文件 `xrdap-ch32-<固件>.bin` 旁边的 `xrdap-ch32-<板子>-bootloader-a.bin` 和 `-bootloader-b.bin`，或 `build/images/<preset>/` 中的 `bootloader-a.elf.bin` 和 `bootloader-b.elf.bin`。它比较那个槽的镜像版本和 USB 产品名中正在运行的版本，不同时先写 bootloader，再写应用；版本相同时不写 bootloader，`--force-bootloader` 强制写入。两个槽都升级时执行两次，第二次加 `--force-bootloader`；接了多块探针时用 `--serial` 选择：
+
+```
+python tools/dfu_update.py --with-bootloader xrdap-ch32-wdap.bin
+```
 
 dfu-util 同样先发 DETACH。两个 DFU 接口的备用设置都是 0，命令按名字选择应用接口，以 `wdap` 为例：
 

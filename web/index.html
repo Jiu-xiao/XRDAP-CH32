@@ -1,0 +1,85 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XR-DAP CH32</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1d2127; --muted: #5d6673; --line: #d9dde3; --accent: #1f6feb;
+    --ok: #1a7f37; --warn: #9a6700; --error: #cf222e; --panel: #f6f8fa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1216; --fg: #e6e9ee; --muted: #9aa4b1; --line: #2c333c; --accent: #4c8dff;
+      --ok: #3fb950; --warn: #d29922; --error: #f85149; --panel: #161b22;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 15px/1.6 system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 16px 48px; }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+  h1 { font-size: 22px; margin: 0 0 8px; }
+  p { margin: 8px 0; }
+  .muted { color: var(--muted); font-size: 13px; }
+  section { border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin: 16px 0; }
+  label.title { display: block; font-weight: 600; margin-bottom: 6px; }
+  input[type=file] { width: 100%; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 16px; }
+  button {
+    border: 1px solid var(--accent); background: var(--accent); color: #fff; border-radius: 6px;
+    padding: 8px 18px; font-size: 15px; cursor: pointer;
+  }
+  button.link { background: none; border: none; color: var(--accent); padding: 0; font-size: 13px; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .track { height: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  #bar { height: 100%; width: 0; background: var(--accent); transition: width 0.2s; }
+  #status { min-height: 1.6em; margin-top: 10px; }
+  #log {
+    margin-top: 10px; max-height: 220px; overflow: auto; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px;
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap;
+  }
+  #log:empty { display: none; }
+  .ok { color: var(--ok); } .warn { color: var(--warn); } .error { color: var(--error); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1 data-t="title"></h1>
+    <button id="lang" class="link" data-t="lang"></button>
+  </header>
+  <p data-t="intro"></p>
+
+  <section>
+    <label class="title" for="app" data-t="appLabel"></label>
+    <input id="app" type="file" accept=".bin">
+    <p class="muted" data-t="appHint"></p>
+    <label><input id="withBl" type="checkbox"> <span data-t="blCheck"></span></label>
+    <div id="blBox" hidden>
+      <input id="bl" type="file" accept=".bin" multiple>
+      <p class="muted" data-t="blHint"></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="row">
+      <button id="start" data-t="start"></button>
+      <button id="connect" data-t="connectBl" hidden></button>
+    </div>
+    <p class="muted" data-t="keyHint"></p>
+    <div class="track"><div id="bar"></div></div>
+    <div id="status"></div>
+    <div id="log"></div>
+  </section>
+
+  <p class="muted"><a href="https://github.com/Jiu-xiao/XRDAP-CH32">XRDAP-CH32</a></p>
+</main>
+<script type="module" src="flash.js"></script>
+</body>
+</html>

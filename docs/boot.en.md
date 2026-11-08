@@ -4,7 +4,7 @@
 
 This document describes the boot chain and flash layout of XRDAP-CH32, the first flashing, the migration from older firmware, and how the application and the bootloader are written over USB DFU.
 
-File names here are those of the release files, with `<firmware>` the preset name. `tools/build.sh` puts the same images in `build/images/<preset>/`: the application `xrdap.elf.bin`, the boot chain `boot-chain.bin`, the slot images `bootloader-a.elf.bin` and `bootloader-b.elf.bin`, and the migration image `migrate-to-ab.elf.bin`.
+File names here are those of the release files, with `<firmware>` the preset name and `<board>` the board name (`wdap`, `v305`, `linkw`). `tools/build.sh` puts the same images in `build/images/<preset>/`: the application `xrdap.elf.bin`, the boot chain `boot-chain.bin`, the slot images `bootloader-a.elf.bin` and `bootloader-b.elf.bin`, and the migration image `migrate-to-ab.elf.bin`.
 
 ## Boot chain
 
@@ -63,7 +63,7 @@ In DFU mode the computer sees the USB device `1209:3072`, named XR-DAP-V307 DFU 
 
 ## First flashing
 
-The first image is the boot chain `xrdap-ch32-<firmware>-boot-chain.bin`: stage 1 and the board's first bootloader slot (slot B on `v305`, slot A on the other boards). The application area is then empty, the bootloader stays in DFU mode, and the application is written as the README shows.
+The first image is the boot chain `xrdap-ch32-<board>-boot-chain.bin`: stage 1 and the board's first bootloader slot (slot B on `v305`, slot A on the other boards). The application area is then empty, the bootloader stays in DFU mode, and the application is written as the README shows.
 
 A WCH-Link or WCH-LinkE (RISC-V mode) on the board's two-wire debug port (SWDIO, SWCLK, GND) writes it with the WCH OpenOCD shipped with MounRiver Studio, here for `wdap`:
 
@@ -79,12 +79,12 @@ A `wdap` without a debug header can use the chip's USB download mode: with BOOT0
 
 ## Migration from older firmware
 
-A board with the older single bootloader (at address 0, application at `0x00010000`) needs no debugger: `dfu_update.py` writes `xrdap-ch32-<firmware>-migrate-to-ab.bin`, the old bootloader starts it as an application, and it writes the boot chain and restarts; the new bootloader stays in DFU mode. A power failure during this step leaves the board without a bootloader, and only the previous section's methods write the boot chain again. The settings stay where they are, but their format before 0.6 differs, so the two probes of a wireless pair are paired again.
+A board with the older single bootloader (at address 0, application at `0x00010000`) needs no debugger: this repository's `tools/dfu_update.py` writes `xrdap-ch32-<board>-migrate-to-ab.bin`, the old bootloader starts it as an application, and it writes the boot chain and restarts; the new bootloader stays in DFU mode. A power failure during this step leaves the board without a bootloader, and only the previous section's methods write the boot chain again. The settings stay where they are, but their format before 0.6 differs, so the two probes of a wireless pair are paired again.
 
 A `v305` with the three-stage boot (USB `1209:3070`) uses the migration image of `v305`:
 
 ```
-python dfu_update.py --bootloader 1209:3070 --run-app xrdap-ch32-v305-migrate-to-ab.bin
+python tools/dfu_update.py --bootloader 1209:3070 --run-app xrdap-ch32-v305-migrate-to-ab.bin
 ```
 
 The migration image first writes slot B and verifies each page while the old stage 1 and bootloader stay as they are; if it fails, the board restarts into the old bootloader and the step can be repeated. Stage 1 is written last, with the page holding the entry point changed last; only a power failure during the few milliseconds of that page needs a WCH-Link for recovery. A board still running the earlier application (USB `0d28:2041`) is powered up with the IAP key held, so that the three-stage boot's bootloader stays in DFU, and the migration image is written then.
@@ -93,9 +93,17 @@ The migration image first writes slot B and verifies each page while the old sta
 
 ## Writing the application and the bootloader
 
-Besides the DAP interface the application has a DFU runtime interface. `dfu_update.py` sends DFU DETACH to it, the probe restarts into the bootloader, and the image is written over standard USB DFU 1.1; at the end of the download the bootloader writes the seal and starts the new application. On Windows the bootloader declares WinUSB, so no driver needs installing.
+Besides the DAP interface the application has a DFU runtime interface. A writing tool sends DFU DETACH to it, the probe restarts into the bootloader, and the image is written over standard USB DFU 1.1. At the end of the download the bootloader writes the seal: when the host then asks for the status, it starts the new application at once; when the host asks no more (WebUSB on Windows cannot reset the device either), it starts the new application 2 s after the seal. On Windows the bootloader declares WinUSB, so no driver needs installing.
 
-In DFU mode the bootloader has two interfaces: interface 0 (`XR-DAP application`) writes the application, interface 1 (`XR-DAP bootloader slot A` or `... slot B`) writes the other bootloader slot. `--with-bootloader` looks for the two slot images in the directory of the application image: `xrdap-ch32-<firmware>-bootloader-a.bin` and `-bootloader-b.bin` beside the release file `xrdap-ch32-<firmware>.bin`, or `bootloader-a.elf.bin` and `bootloader-b.elf.bin` in `build/images/<preset>/`. `dfu_update.py` compares the version of that slot's image with the running version in the USB product string and writes the bootloader first when they differ: after writing the slot record the bootloader restarts, stage 1 starts the new bootloader, and then the application is written. When the versions are equal the bootloader is not written; `--force-bootloader` writes it anyway. Updating both slots takes two runs, the second with `--force-bootloader`.
+In DFU mode the bootloader has two interfaces: interface 0 (`XR-DAP application`) writes the application, interface 1 (`XR-DAP bootloader slot A` or `... slot B`) writes the other bootloader slot. After writing the slot record the bootloader restarts, stage 1 starts the new bootloader, and interface 1 then names the other slot; updating both slots writes twice.
+
+The update page (`web/`, published at https://jiu-xiao.github.io/XRDAP-CH32/ ) takes these steps over WebUSB. It reads the interface names and the transfer size of the DFU functional descriptor from the descriptors, waits for the bootloader to enumerate again after a slot, and starts a download again from the first block when the bootloader goes back to dfuIDLE in its middle.
+
+`tools/dfu_update.py` needs Python and `pip install pyusb libusb-package`. `--with-bootloader` looks for the two slot images in the directory of the application image: `xrdap-ch32-<board>-bootloader-a.bin` and `-bootloader-b.bin` beside the release file `xrdap-ch32-<firmware>.bin`, or `bootloader-a.elf.bin` and `bootloader-b.elf.bin` in `build/images/<preset>/`. It compares the version of that slot's image with the running version in the USB product string and writes the bootloader first when they differ, then the application; when the versions are equal the bootloader is not written, and `--force-bootloader` writes it anyway. Updating both slots takes two runs, the second with `--force-bootloader`; `--serial` selects one of several probes:
+
+```
+python tools/dfu_update.py --with-bootloader xrdap-ch32-wdap.bin
+```
 
 dfu-util sends DETACH as well. Both DFU interfaces have alternate setting 0, so the command selects the application interface by name, here for `wdap`:
 
