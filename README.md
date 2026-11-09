@@ -66,6 +66,20 @@ xrdap watch --elf app.elf motor.speed motor.current --period 1ms --csv log.csv
 
 无线调试时这些命令同样转发给远端，采样在远端进行。命令格式见 XRDAP-Core 的 `docs/protocol.md` 第 3 节。
 
+## 性能
+
+下表为 CH32V307 板和 WCH-LinkW 在 0.6.0（`0.6.0+g303d983`）下的测量结果。主机为 Windows 11，目标为 STM32H723（`linkw` 两行为 STM32F302CB），测试程序为 XRDAP-Core 的 [`tests/`](https://github.com/Jiu-xiao/XRDAP-Core/tree/main/tests)（bce599e）。`linkw` 无线一行在 SWD 请求 20 MHz 下测量，其余各行 SWD 请求 50 MHz 时读写全部正确，各项在这一请求下测量。小变量读写是用厂商扩展命令读、写一个 4 字节 SRAM 变量的往返时间中位数；块读写在 SRAM 中写入、读出 16 KiB，流水读同时有 4 个请求在途；OpenOCD 和 probe-rs 0.31 读目标 Flash 128 KiB，probe-rs 一列扣除了连接时间；采样周期是 `xrdap watch` 采样 8 个 SRAM 变量、连续 60 s 不跳拍不丢帧的最短周期。
+
+| 固件 | 连接 | 小变量读 / 写 | 块写 / 读 / 流水读 | OpenOCD 读 128 KiB | probe-rs 读 128 KiB | 8 个变量采样最短周期 |
+|---|---|---|---|---|---|---|
+| `wdap`（216 MHz） | 有线 | 139 / 148 µs | 736 / 762 / 1081 KiB/s | 0.13 s | 约 0.13 s | 400 µs |
+| `wdap-144` | 有线 | 125 / 125 µs | 588 / 625 / 730 KiB/s | 0.19 s | 约 0.19 s | 800 µs |
+| `wdap-144` | 无线 | 771 / 771 µs | 96 / 97 / 93 KiB/s | 1.27 s | - | 800 µs |
+| `linkw` | 有线 | 184 / 192 µs | 332 / 351 / 391 KiB/s | 0.21 s | 约 0.31 s | 250 µs |
+| `linkw` | 无线 | 621 / 622 µs | 104 / 105 / 113 KiB/s | 1.28–1.40 s | - | 800 µs |
+
+`wdap` 一行的块读写在电脑空闲时测量；`linkw` 无线一行的两块板并排放置；无线两行没有测 probe-rs。
+
 ## 编译
 
 编译需要 CMake 3.21 以上和 WCH RISC-V GCC 15.2 以上（`riscv32-wch-elf-gcc` 在 `PATH` 中，或用 `-DCOMPILER_PREFIX=<路径>/riscv32-wch-elf-` 指定）。每种固件对应 `CMakePresets.json` 中的一个 preset，一个 preset 编出应用和这块板的启动链：

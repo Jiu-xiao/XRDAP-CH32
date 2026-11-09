@@ -66,6 +66,20 @@ xrdap watch --elf app.elf motor.speed motor.current --period 1ms --csv log.csv
 
 In wireless debugging these commands are forwarded to the remote as well, and the remote samples. The command formats are in section 3 of XRDAP-Core's `docs/protocol.en.md`.
 
+## Performance
+
+The table shows measurements of the CH32V307 board and the WCH-LinkW with 0.6.0 (`0.6.0+g303d983`). The host runs Windows 11, the target is an STM32H723 (an STM32F302CB in the two `linkw` rows), and the test program is XRDAP-Core's [`tests/`](https://github.com/Jiu-xiao/XRDAP-Core/tree/main/tests) (bce599e). The wireless `linkw` row is measured with an SWD request of 20 MHz; in the other rows, reads and writes are correct with an SWD request of 50 MHz, and every item is measured at that request. Small variable read / write is the median round trip of reading and writing one 4-byte SRAM variable with the vendor extension commands; block transfers write and read 16 KiB of SRAM, and the pipelined read keeps 4 requests in flight; OpenOCD and probe-rs 0.31 read 128 KiB of target flash, and the probe-rs column excludes the connection time; the sampling period is the shortest at which `xrdap watch` samples 8 SRAM variables for 60 s without skipped ticks or lost frames.
+
+| Firmware | Link | Small variable read / write | Block write / read / pipelined read | OpenOCD reading 128 KiB | probe-rs reading 128 KiB | Shortest period, 8 variables |
+|---|---|---|---|---|---|---|
+| `wdap` (216 MHz) | Wired | 139 / 148 µs | 736 / 762 / 1081 KiB/s | 0.13 s | about 0.13 s | 400 µs |
+| `wdap-144` | Wired | 125 / 125 µs | 588 / 625 / 730 KiB/s | 0.19 s | about 0.19 s | 800 µs |
+| `wdap-144` | Wireless | 771 / 771 µs | 96 / 97 / 93 KiB/s | 1.27 s | - | 800 µs |
+| `linkw` | Wired | 184 / 192 µs | 332 / 351 / 391 KiB/s | 0.21 s | about 0.31 s | 250 µs |
+| `linkw` | Wireless | 621 / 622 µs | 104 / 105 / 113 KiB/s | 1.28–1.40 s | - | 800 µs |
+
+The block transfers of the `wdap` row were measured with the computer idle; the two boards of the wireless `linkw` row lay side by side; probe-rs was not measured in the two wireless rows.
+
 ## Building
 
 Building needs CMake 3.21 or newer and WCH RISC-V GCC 15.2 or newer (`riscv32-wch-elf-gcc` on `PATH`, or `-DCOMPILER_PREFIX=<path>/riscv32-wch-elf-`). Each firmware is a preset in `CMakePresets.json`, and a preset builds the application and the board's boot chain:
