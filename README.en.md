@@ -4,6 +4,8 @@
 
 XRDAP-CH32 is CMSIS-DAP v2 debug probe firmware for the WCH CH32V307, CH32V305 and CH32V208, built on [libxr](https://github.com/xrobot-org/libxr) and part of the XR-DAP family. Keil, pyOCD, probe-rs and OpenOCD use it as an ordinary CMSIS-DAP probe. Two probes with a radio form a wireless probe: one is plugged into the computer, the other is wired to the target. The firmware also implements the XR vendor extension, with which the host tool of [XRDAP-Host](https://github.com/Jiu-xiao/XRDAP-Host) reads and writes variables and has the probe sample them at a fixed period. The code shared by the XR-DAP probes is in [XRDAP-Core](https://github.com/Jiu-xiao/XRDAP-Core).
 
+An introduction video of the XR-DAP family is on [YouTube](https://youtu.be/H6S_sdkS8vs).
+
 ## Boards
 
 | Firmware | Board | Chip and clock | USB | Radio |

@@ -4,6 +4,8 @@
 
 XRDAP-CH32 是运行在沁恒 CH32V307、CH32V305 和 CH32V208 上的 CMSIS-DAP v2 调试探针固件，基于 [libxr](https://github.com/xrobot-org/libxr)，属于 XR-DAP 系列。Keil、pyOCD、probe-rs、OpenOCD 把它当作普通的 CMSIS-DAP 探针使用。两块带射频的探针可以组成一套无线探针，一块插在电脑上，另一块接目标。固件还实现了 XR 厂商扩展，配合电脑端工具 [XRDAP-Host](https://github.com/Jiu-xiao/XRDAP-Host) 读写变量、在探针上按固定周期采样变量。XR-DAP 各探针共用的代码在 [XRDAP-Core](https://github.com/Jiu-xiao/XRDAP-Core)。
 
+XR-DAP 系列的介绍视频见 [Bilibili](https://www.bilibili.com/video/BV17oWx6YEde/)。
+
 ## 板子
 
 | 固件 | 板子 | 芯片与主频 | USB | 无线 |
